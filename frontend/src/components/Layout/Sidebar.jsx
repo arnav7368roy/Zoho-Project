@@ -31,8 +31,9 @@ export default function Sidebar() {
     async function fetchRecentProjects() {
       try {
         const res = await apiRequest('/api/v1/projects?page=1&limit=5');
-        if (isMounted && res.ok && res.data?.status) {
-          setRecentProjects(res.data.data || []);
+        if (isMounted && res.ok) {
+          const list = Array.isArray(res.data?.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []);
+          setRecentProjects(list);
         }
       } catch (err) {
         console.error('Failed to load recent projects:', err);

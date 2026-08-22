@@ -26,21 +26,28 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [dashRes, projRes, taskRes] = await Promise.all([
-          apiRequest('/api/v1/dashboard'),
+        const [projRes, taskRes, userRes] = await Promise.all([
           apiRequest('/api/v1/projects'),
           apiRequest('/api/v1/tasks'),
+          apiRequest('/api/v1/users/dropdown'),
         ]);
 
-        if (dashRes.ok && dashRes.data?.data) {
-          setStats(dashRes.data.data);
-        }
-        if (projRes.ok && projRes.data?.data) {
-          setProjects(projRes.data.data || []);
-        }
-        if (taskRes.ok && taskRes.data?.data) {
-          setTasks(taskRes.data.data || []);
-        }
+        const projectList = projRes.ok && projRes.data?.data ? projRes.data.data : [];
+        const taskList = taskRes.ok && taskRes.data?.data ? taskRes.data.data : [];
+        const userList = userRes.ok && userRes.data?.data ? userRes.data.data : [];
+
+        setProjects(projectList);
+        setTasks(taskList);
+
+        const activeCount = taskList.filter(t => t.status !== 'COMPLETED').length;
+        const completedCount = taskList.filter(t => t.status === 'COMPLETED').length;
+
+        setStats({
+          totalProjects: projectList.length,
+          activeTasks: activeCount,
+          completedTasks: completedCount,
+          totalMembers: userList.length || 1,
+        });
       } catch (err) {
         console.error('Failed to load dashboard data:', err);
       } finally {
