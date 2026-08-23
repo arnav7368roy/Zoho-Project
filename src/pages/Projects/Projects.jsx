@@ -10,6 +10,30 @@ export default function Projects() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Helper for Manager/User display name resolution
+  const getDisplayName = (m) => {
+    if (!m) return '';
+    if (typeof m === 'string') return m;
+    const fullName = [
+      m.firstName || m.first_name || m.given_name,
+      m.lastName || m.last_name || m.family_name
+    ].filter(Boolean).join(' ').trim();
+    
+    return (
+      fullName ||
+      m.name ||
+      m.fullName ||
+      m.full_name ||
+      m.userName ||
+      m.user_name ||
+      m.label ||
+      m.email ||
+      m.employeeCode ||
+      m.employee_code ||
+      (m.id ? `User (${String(m.id).substring(0, 6)})` : '')
+    );
+  };
   
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -332,8 +356,8 @@ export default function Projects() {
                 >
                   <option value="">Select Manager (Default: Me)</option>
                   {managers.map((m) => (
-                    <option key={m.id || m.value} value={m.id || m.value}>
-                      {m.name || m.label || (m.firstName ? `${m.firstName} ${m.lastName || ''}`.trim() : (m.email || 'Manager'))}
+                    <option key={m.id || m.value || m.userId} value={m.id || m.value || m.userId}>
+                      {getDisplayName(m) || `Manager ${m.id || ''}`}
                     </option>
                   ))}
                 </select>
@@ -429,8 +453,8 @@ export default function Projects() {
                 >
                   <option value="">Select Manager</option>
                   {managers.map((m) => (
-                    <option key={m.id || m.value} value={m.id || m.value}>
-                      {m.name || m.label || (m.firstName ? `${m.firstName} ${m.lastName || ''}`.trim() : (m.email || 'Manager'))}
+                    <option key={m.id || m.value || m.userId} value={m.id || m.value || m.userId}>
+                      {getDisplayName(m) || `Manager ${m.id || ''}`}
                     </option>
                   ))}
                 </select>
@@ -515,8 +539,8 @@ export default function Projects() {
               >
                 <option value="">Select Employee to Assign...</option>
                 {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.firstName ? `${u.firstName} ${u.lastName || ''} (${u.employeeCode})` : (u.name || u.label)}
+                  <option key={u.id || u.value || u.userId} value={u.id || u.value || u.userId}>
+                    {getDisplayName(u)} {u.employeeCode || u.employee_code ? `(${u.employeeCode || u.employee_code})` : ''}
                   </option>
                 ))}
               </select>

@@ -182,6 +182,19 @@ body {
   box-shadow: 0 0 0 3px var(--primary-light);
 }
 
+select.form-input option,
+.form-input option {
+  background-color: var(--bg-sidebar);
+  color: var(--text-main);
+  padding: 8px;
+}
+
+.light-theme select.form-input option,
+.light-theme .form-input option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
 /* Badges */
 .badge {
   display: inline-flex;
