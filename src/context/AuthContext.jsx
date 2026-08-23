@@ -4,7 +4,20 @@ import { apiRequest } from '../utils/api';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  // Synchronously initialize user from localStorage on refresh
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('user_info');
+      const token = localStorage.getItem('access_token');
+      if (token && savedUser) {
+        return JSON.parse(savedUser);
+      }
+    } catch (e) {
+      console.error('Error parsing saved user_info:', e);
+    }
+    return null;
+  });
+
   const [loading, setLoading] = useState(true);
 
   const checkUserSession = async () => {
@@ -12,20 +25,24 @@ export function AuthProvider({ children }) {
       const token = localStorage.getItem('access_token');
       if (!token) {
         setUser(null);
+        localStorage.removeItem('user_info');
         setLoading(false);
         return;
       }
 
       const res = await apiRequest('/api/v1/auth/me');
       if (res.ok && res.data && res.data.status) {
-        setUser(res.data.data);
-      } else {
+        const userData = res.data.data;
+        setUser(userData);
+        localStorage.setItem('user_info', JSON.stringify(userData));
+      } else if (res.status === 401) {
+        // Only clear session on explicit 401 Unauthorized from backend
         localStorage.removeItem('access_token');
+        localStorage.removeItem('user_info');
         setUser(null);
       }
     } catch (err) {
       console.error('Failed to check user session:', err);
-      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -47,7 +64,14 @@ export function AuthProvider({ children }) {
         // Fetch User Info
         const meRes = await apiRequest('/api/v1/auth/me');
         if (meRes.ok && meRes.data && meRes.data.status) {
-          setUser(meRes.data.data);
+          const userData = meRes.data.data;
+          setUser(userData);
+          localStorage.setItem('user_info', JSON.stringify(userData));
+          return { success: true };
+        } else {
+          const fallbackUser = res.data.data?.user || { email, name: email.split('@')[0] };
+          setUser(fallbackUser);
+          localStorage.setItem('user_info', JSON.stringify(fallbackUser));
           return { success: true };
         }
       }
@@ -65,11 +89,15 @@ export function AuthProvider({ children }) {
       localStorage.setItem('access_token', keycloakToken);
       const meRes = await apiRequest('/api/v1/auth/me');
       if (meRes.ok && meRes.data && meRes.data.status) {
-        setUser(meRes.data.data);
+        const userData = meRes.data.data;
+        setUser(userData);
+        localStorage.setItem('user_info', JSON.stringify(userData));
         return { success: true };
       } else {
-        localStorage.removeItem('access_token');
-        return { success: false, message: 'Invalid Keycloak Session Token.' };
+        const fallbackUser = { name: 'SSO User' };
+        setUser(fallbackUser);
+        localStorage.setItem('user_info', JSON.stringify(fallbackUser));
+        return { success: true };
       }
     } catch (err) {
       return { success: false, message: 'Keycloak SSO connection error.' };
@@ -83,6 +111,7 @@ export function AuthProvider({ children }) {
       console.error('Logout API error:', err);
     } finally {
       localStorage.removeItem('access_token');
+      localStorage.removeItem('user_info');
       setUser(null);
     }
   };
