@@ -8,8 +8,9 @@ import { useAuth } from '../../context/AuthContext';
  */
 export default function PublicRoute({ children }) {
   const { user, loading } = useAuth();
+  const hasToken = localStorage.getItem('access_token');
 
-  if (loading) {
+  if (loading && !hasToken) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--text-muted)' }}>
         Loading session...
@@ -17,7 +18,7 @@ export default function PublicRoute({ children }) {
     );
   }
 
-  if (user) {
+  if (user || hasToken) {
     return <Navigate to="/" replace />;
   }
 
