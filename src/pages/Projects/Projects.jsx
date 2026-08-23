@@ -38,7 +38,7 @@ export default function Projects() {
     setEditingProject(project);
     setProjectName(project.projectName || '');
     setProjectCode(project.projectCode || '');
-    setManagerId(project.managerId || '');
+    setManagerId(project.managerId || project.manager_id || project.manager?.id || '');
     setStartDate(project.startDate || '');
     setEndDate(project.endDate || '');
     setDescription(project.description || '');
@@ -85,12 +85,22 @@ export default function Projects() {
   };
 
   const fetchDropdowns = async () => {
-    const [mgrRes, userRes] = await Promise.all([
-      apiRequest('/api/v1/projects/project-manager-dropdown'),
-      apiRequest('/api/v1/users/dropdown'),
-    ]);
-    if (mgrRes.ok && mgrRes.data?.data) setManagers(mgrRes.data.data);
-    if (userRes.ok && userRes.data?.data) setUsers(userRes.data.data);
+    try {
+      const [mgrRes, userRes] = await Promise.all([
+        apiRequest('/api/v1/projects/project-manager-dropdown'),
+        apiRequest('/api/v1/users/dropdown'),
+      ]);
+
+      const userList = userRes.ok && userRes.data?.data ? userRes.data.data : [];
+      const mgrList = (mgrRes.ok && Array.isArray(mgrRes.data?.data) && mgrRes.data.data.length > 0)
+        ? mgrRes.data.data
+        : userList;
+
+      setManagers(mgrList);
+      setUsers(userList);
+    } catch (err) {
+      console.error('Failed to fetch dropdowns:', err);
+    }
   };
 
   useEffect(() => {
@@ -322,8 +332,8 @@ export default function Projects() {
                 >
                   <option value="">Select Manager (Default: Me)</option>
                   {managers.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name || m.firstName || m.label || `${m.firstName || ''} ${m.lastName || ''}`}
+                    <option key={m.id || m.value} value={m.id || m.value}>
+                      {m.name || m.label || (m.firstName ? `${m.firstName} ${m.lastName || ''}`.trim() : (m.email || 'Manager'))}
                     </option>
                   ))}
                 </select>
@@ -419,8 +429,8 @@ export default function Projects() {
                 >
                   <option value="">Select Manager</option>
                   {managers.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name || m.firstName || m.label || `${m.firstName || ''} ${m.lastName || ''}`}
+                    <option key={m.id || m.value} value={m.id || m.value}>
+                      {m.name || m.label || (m.firstName ? `${m.firstName} ${m.lastName || ''}`.trim() : (m.email || 'Manager'))}
                     </option>
                   ))}
                 </select>
