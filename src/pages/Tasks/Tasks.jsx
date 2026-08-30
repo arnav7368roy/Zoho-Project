@@ -215,6 +215,12 @@ export default function Tasks() {
     fetchInitialData();
   }, []);
 
+  useEffect(() => {
+    if (tasks.length > 0 && !selectedTask) {
+      setSelectedTask(tasks[0]);
+    }
+  }, [tasks, selectedTask]);
+
   // Interval for Live Timer Ticking
   useEffect(() => {
     let interval = null;
@@ -610,13 +616,20 @@ export default function Tasks() {
                     const isRunning = t.id === runningTaskId || t.timerStatus === 'RUNNING';
 
                     return (
-                      <tr key={t.id || taskCode} style={styles.tr}>
+                      <tr
+                        key={t.id || taskCode}
+                        onClick={() => {
+                          setSelectedTask(t);
+                          setViewMode('detail');
+                        }}
+                        style={{ ...styles.tr, cursor: 'pointer' }}
+                      >
                         <td>
-                          <input type="checkbox" />
+                          <input type="checkbox" onClick={(e) => e.stopPropagation()} />
                         </td>
 
                         {/* Live Timer Control Buttons */}
-                        <td>
+                        <td onClick={(e) => e.stopPropagation()}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {isRunning ? (
                               <button
@@ -652,18 +665,8 @@ export default function Tasks() {
                           </div>
                         </td>
 
-                        <td
-                          onClick={() => setSelectedTask(t)}
-                          style={{ fontWeight: '700', color: '#60a5fa', cursor: 'pointer' }}
-                        >
-                          {taskCode}
-                        </td>
-                        <td
-                          onClick={() => setSelectedTask(t)}
-                          style={{ fontWeight: '600', color: '#f8fafc', cursor: 'pointer' }}
-                        >
-                          {t.title}
-                        </td>
+                        <td style={{ fontWeight: '700', color: '#60a5fa' }}>{taskCode}</td>
+                        <td style={{ fontWeight: '600', color: '#f8fafc' }}>{t.title}</td>
                         <td style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <Link size={12} /> {t.projectName || 'Default Project'}
@@ -761,7 +764,10 @@ export default function Tasks() {
                       </div>
 
                       <div
-                        onClick={() => setSelectedTask(task)}
+                        onClick={() => {
+                          setSelectedTask(task);
+                          setViewMode('detail');
+                        }}
                         style={{ fontWeight: '700', fontSize: '0.88rem', color: '#ffffff', margin: '6px 0', cursor: 'pointer' }}
                       >
                         {task.title}
