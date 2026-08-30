@@ -32,6 +32,7 @@ import {
   Layers,
 } from 'lucide-react';
 import FilterPanel from '../../components/FilterPanel';
+import ManualLogHoursModal from '../../components/ManualLogHoursModal';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Issues() {
@@ -43,6 +44,25 @@ export default function Issues() {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [issueLogs, setIssueLogs] = useState([
+    {
+      id: 'log-1',
+      date: '2026-08-28',
+      userName: 'Arnav Roy',
+      hours: '3.0',
+      description: 'Initial analysis and reproduction of character encoding issue.',
+      billable: true,
+    },
+    {
+      id: 'log-2',
+      date: '2026-08-29',
+      userName: 'Laddu Kumar',
+      hours: '2.0',
+      description: 'Applied UTF-8 font fallback fix in PDF report exporter.',
+      billable: true,
+    },
+  ]);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'detail'
   const [activeTab, setActiveTab] = useState('Comments');
@@ -793,35 +813,128 @@ export default function Issues() {
                 ))}
               </div>
 
-              {/* Comment Input Box */}
-              <div style={styles.commentEditorBox}>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                  <div style={styles.userAvatarSmall}>A</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={styles.wysiwygBox}>
-                      <div style={styles.toolbarRow}>
-                        <Bold size={13} style={styles.toolIcon} />
-                        <Italic size={13} style={styles.toolIcon} />
-                        <Underline size={13} style={styles.toolIcon} />
-                        <Strikethrough size={13} style={styles.toolIcon} />
-                        <span style={styles.toolDivider}>|</span>
-                        <span style={{ fontSize: '0.75rem', color: '#475569' }}>Puvi ▾</span>
-                        <span style={{ fontSize: '0.75rem', color: '#475569' }}>13 ▾</span>
-                        <span style={styles.toolDivider}>|</span>
-                        <ListIcon size={13} style={styles.toolIcon} />
-                        <ListOrdered size={13} style={styles.toolIcon} />
-                        <Code size={13} style={styles.toolIcon} />
-                        <ImageIcon size={13} style={styles.toolIcon} />
+              {/* TAB CONTENT PANELS */}
+              {activeTab === 'Log Hours' ? (
+                <div style={{ padding: '20px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
+                  {/* Top action bar */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700', color: '#0f172a' }}>
+                        Logged Work Hours for {selectedIssue.issueCode || 'Issue'}
+                      </h4>
+                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                        Total Effort: {selectedIssue.effortHours || '5.0'} hours
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => setShowLogModal(true)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        backgroundColor: '#2563eb',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        fontSize: '0.82rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Plus size={14} /> + Add Log Time
+                    </button>
+                  </div>
+
+                  {/* Logged items list */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {issueLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        style={{
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          padding: '12px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <Clock size={16} color="#3b82f6" />
+                          <div>
+                            <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>
+                              {log.description}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                              Logged by <strong>{log.userName}</strong> on {log.date}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {log.billable && (
+                            <span
+                              style={{
+                                backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                                color: '#16a34a',
+                                fontSize: '0.7rem',
+                                fontWeight: '700',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                              }}
+                            >
+                              Billable
+                            </span>
+                          )}
+                          <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#2563eb' }}>
+                            {log.hours} hrs
+                          </span>
+                        </div>
                       </div>
-                      <textarea
-                        rows={2}
-                        placeholder="To add Issue Comment via email..."
-                        style={styles.wysiwygTextarea}
-                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Comment Input Box (Default) */
+                <div style={styles.commentEditorBox}>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <div style={styles.userAvatarSmall}>A</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={styles.wysiwygBox}>
+                        <div style={styles.toolbarRow}>
+                          <Bold size={13} style={styles.toolIcon} />
+                          <Italic size={13} style={styles.toolIcon} />
+                          <Underline size={13} style={styles.toolIcon} />
+                          <Strikethrough size={13} style={styles.toolIcon} />
+                          <span style={styles.toolDivider}>|</span>
+                          <span style={{ fontSize: '0.75rem', color: '#475569' }}>Puvi ▾</span>
+                          <span style={{ fontSize: '0.75rem', color: '#475569' }}>13 ▾</span>
+                          <span style={styles.toolDivider}>|</span>
+                          <ListIcon size={13} style={styles.toolIcon} />
+                          <ListOrdered size={13} style={styles.toolIcon} />
+                          <Code size={13} style={styles.toolIcon} />
+                          <ImageIcon size={13} style={styles.toolIcon} />
+                        </div>
+                        <textarea
+                          rows={2}
+                          placeholder="To add Issue Comment via email..."
+                          style={styles.wysiwygTextarea}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           ) : (
             <div style={{ flex: 1, padding: '40px', color: '#94a3b8', textAlign: 'center' }}>
@@ -830,6 +943,17 @@ export default function Issues() {
           )}
         </div>
       )}
+
+      {/* Manual Time Logging Modal for Issues */}
+      <ManualLogHoursModal
+        isOpen={showLogModal}
+        onClose={() => setShowLogModal(false)}
+        prefilledItem={selectedIssue}
+        users={users}
+        onLogSaved={(newLog) => {
+          setIssueLogs((prev) => [newLog, ...prev]);
+        }}
+      />
 
       {/* NEW ISSUE SLIDE-OVER DRAWER */}
       {showDrawer && (

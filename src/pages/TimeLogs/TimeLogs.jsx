@@ -12,55 +12,96 @@ import {
   FileText,
   Calendar,
   Layers,
+  Plus,
+  BarChart2,
+  List,
 } from 'lucide-react';
 import { apiRequest } from '../../utils/api';
+import WorkingHoursChart from '../../components/WorkingHoursChart';
+import ManualLogHoursModal from '../../components/ManualLogHoursModal';
 
 export default function TimeLogs() {
   const [logs, setLogs] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [issues, setIssues] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState('ALL');
+  const [activeTab, setActiveTab] = useState('chart'); // 'chart' or 'audit'
+  const [showLogModal, setShowLogModal] = useState(false);
 
-  const fetchLogsAndTasks = async () => {
+  const fetchLogsAndData = async () => {
     setLoading(true);
     try {
-      const res = await apiRequest('/api/v1/tasks');
-      if (res.ok && res.data?.data) {
-        const fetchedTasks = res.data.data;
-        setTasks(fetchedTasks);
+      const [taskRes, issueRes, userRes] = await Promise.all([
+        apiRequest('/api/v1/tasks'),
+        apiRequest('/api/v1/issues'),
+        apiRequest('/api/v1/users'),
+      ]);
 
-        // Aggregate logs from all tasks
-        let aggregatedLogs = [];
-        fetchedTasks.forEach((t) => {
-          if (t.taskLogs && Array.isArray(t.taskLogs) && t.taskLogs.length > 0) {
-            t.taskLogs.forEach((log) => {
-              aggregatedLogs.push({
-                ...log,
-                taskCode: t.taskCode || t.id.slice(0, 8),
-                taskTitle: t.title,
-                projectName: t.project?.projectName || 'General Project',
-              });
-            });
-          } else {
-            // Standard log entry for tasks with timerStatus
+      let fetchedTasks = [];
+      let fetchedIssues = [];
+      let fetchedUsers = [];
+
+      if (taskRes.ok && taskRes.data?.data) {
+        fetchedTasks = taskRes.data.data;
+        setTasks(fetchedTasks);
+      }
+      if (issueRes.ok && issueRes.data?.data) {
+        fetchedIssues = issueRes.data.data;
+        setIssues(fetchedIssues);
+      }
+      if (userRes.ok && userRes.data?.data) {
+        fetchedUsers = userRes.data.data;
+        setUsers(fetchedUsers);
+      }
+
+      // Aggregate logs from all tasks
+      let aggregatedLogs = [];
+      fetchedTasks.forEach((t) => {
+        if (t.taskLogs && Array.isArray(t.taskLogs) && t.taskLogs.length > 0) {
+          t.taskLogs.forEach((log) => {
             aggregatedLogs.push({
-              id: `log-${t.id}`,
+              ...log,
               taskCode: t.taskCode || t.id.slice(0, 8),
               taskTitle: t.title,
-              projectName: t.project?.projectName || 'WorkMatrix System',
-              action: t.timerStatus || 'CREATED',
-              remarks: t.stopReason || (t.timerStatus === 'PAUSED' ? 'Timer paused by user' : 'Task activity recorded'),
-              createdAt: t.updatedAt || t.createdAt,
-              userName: t.assignedUser ? `${t.assignedUser.firstName} ${t.assignedUser.lastName || ''}`.strip?.() || 'Assigned User' : 'Unassigned',
+              projectName: t.project?.projectName || 'General Project',
+              hours: log.hours || (log.duration ? (log.duration / 3600).toFixed(2) : 1.5),
             });
-          }
-        });
+          });
+        } else {
+          aggregatedLogs.push({
+            id: `log-${t.id}`,
+            taskCode: t.taskCode || t.id.slice(0, 8),
+            taskTitle: t.title,
+            projectName: t.project?.projectName || 'WorkMatrix System',
+            action: t.timerStatus || 'CREATED',
+            remarks: t.stopReason || (t.timerStatus === 'PAUSED' ? 'Timer paused by user' : 'Task activity recorded'),
+            createdAt: t.updatedAt || t.createdAt,
+            userName: t.assignedUser ? `${t.assignedUser.firstName} ${t.assignedUser.lastName || ''}`.trim() : 'Assigned User',
+            hours: t.timerSeconds ? (t.timerSeconds / 3600).toFixed(2) : 2.0,
+          });
+        }
+      });
 
-        // Sort descending by timestamp
-        aggregatedLogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        setLogs(aggregatedLogs);
-      }
+      // Also include issues logs
+      fetchedIssues.forEach((iss) => {
+        aggregatedLogs.push({
+          id: `issue-log-${iss.id}`,
+          taskCode: iss.issueCode || `ISS-${iss.id.slice(0, 5)}`,
+          taskTitle: iss.title,
+          projectName: iss.projectName || 'Zoho Upgrade System',
+          action: 'LOGGED',
+          remarks: `Logged effort for issue ${iss.issueCode}: ${iss.title}`,
+          createdAt: iss.updatedAt || iss.createdAt,
+          userName: iss.assigneeName || 'Laddu Kumar',
+          hours: parseFloat(iss.effortHours) || 3.0,
+        });
+      });
+
+      aggregatedLogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setLogs(aggregatedLogs);
     } catch (err) {
       console.error('Error fetching time logs:', err);
     } finally {
@@ -69,8 +110,12 @@ export default function TimeLogs() {
   };
 
   useEffect(() => {
-    fetchLogsAndTasks();
+    fetchLogsAndData();
   }, []);
+
+  const handleManualLogSaved = (newLog) => {
+    setLogs((prev) => [newLog, ...prev]);
+  };
 
   const getActionBadge = (action) => {
     switch (action?.toUpperCase()) {
@@ -132,108 +177,157 @@ export default function TimeLogs() {
 
   return (
     <div style={styles.container}>
-      {/* Header Bar */}
+      {/* Top Page Header */}
       <div style={styles.header}>
         <div>
-          <h1 style={styles.title}>Time Logs & Task Audit Stream</h1>
+          <h1 style={styles.title}>Time Logs & Working Hours Analytics</h1>
           <p style={styles.subtitle}>
-            Real-time audit log of timer actions (Start, Pause Reason, Resume, Stop) across all project tasks.
+            Monitor employee working hours, ticket time investments, and manual timesheet logs.
           </p>
         </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Main View Mode Switcher */}
+          <div style={styles.tabToggleGroup}>
+            <button
+              onClick={() => setActiveTab('chart')}
+              style={{
+                ...styles.tabBtn,
+                ...(activeTab === 'chart' ? styles.activeTabBtn : {}),
+              }}
+            >
+              <BarChart2 size={15} /> <span>Working Hours Chart</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('audit')}
+              style={{
+                ...styles.tabBtn,
+                ...(activeTab === 'audit' ? styles.activeTabBtn : {}),
+              }}
+            >
+              <List size={15} /> <span>Audit Stream</span>
+            </button>
+          </div>
+
+          {/* Log Time Button */}
+          <button onClick={() => setShowLogModal(true)} style={styles.logTimeBtn}>
+            <Plus size={16} /> <span>+ Add Log Time</span>
+          </button>
+        </div>
       </div>
 
-      {/* Filter & Toolbar */}
-      <div style={styles.toolbar}>
-        <div style={styles.searchBox}>
-          <Search size={16} color="var(--text-muted)" />
-          <input
-            type="text"
-            placeholder="Search by Task Code, Title, Pause Reason or Employee..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={styles.searchInput}
-          />
-        </div>
+      {/* Manual Time Logging Modal */}
+      <ManualLogHoursModal
+        isOpen={showLogModal}
+        onClose={() => setShowLogModal(false)}
+        onLogSaved={handleManualLogSaved}
+        users={users}
+      />
 
-        <div style={styles.filterGroup}>
-          <Filter size={16} color="var(--text-muted)" />
-          <select
-            value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value)}
-            style={styles.filterSelect}
-          >
-            <option value="ALL">All Actions</option>
-            <option value="START">Start</option>
-            <option value="PAUSE">Pause</option>
-            <option value="RESUME">Resume</option>
-            <option value="STOP">Stop</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Timeline Stream */}
-      {loading ? (
-        <div style={styles.loadingBox}>
-          <Clock size={28} className="spin" color="#3b82f6" />
-          <span>Loading time log stream...</span>
-        </div>
-      ) : filteredLogs.length === 0 ? (
-        <div style={styles.emptyBox}>
-          <Clock size={36} color="#64748b" />
-          <p>No timer logs match your query.</p>
-        </div>
+      {/* Render Selected View */}
+      {activeTab === 'chart' ? (
+        <WorkingHoursChart logs={logs} tasks={tasks} issues={issues} users={users} />
       ) : (
-        <div style={styles.logList}>
-          {filteredLogs.map((log, index) => {
-            const badge = getActionBadge(log.action);
-            const BadgeIcon = badge.icon;
-            return (
-              <div key={log.id || index} style={styles.logCard}>
-                <div style={styles.cardHeader}>
-                  <div style={styles.taskInfo}>
-                    <span style={styles.taskCode}>{log.taskCode}</span>
-                    <span style={styles.taskTitle}>{log.taskTitle}</span>
-                  </div>
-                  <div
-                    style={{
-                      ...styles.actionBadge,
-                      backgroundColor: badge.bg,
-                      color: badge.color,
-                      border: `1px solid ${badge.border}`,
-                    }}
-                  >
-                    <BadgeIcon size={12} />
-                    <span>{badge.label}</span>
-                  </div>
-                </div>
+        <>
+          {/* Filter & Toolbar */}
+          <div style={styles.toolbar}>
+            <div style={styles.searchBox}>
+              <Search size={16} color="#94a3b8" />
+              <input
+                type="text"
+                placeholder="Search by Task Code, Title, Remarks or Employee..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={styles.searchInput}
+              />
+            </div>
 
-                {/* Pause Reason / Activity Remarks */}
-                <div style={styles.remarksBox}>
-                  <FileText size={14} color="#94a3b8" />
-                  <span style={styles.remarksText}>
-                    {log.remarks || (log.action === 'PAUSE' ? 'User paused timer without specific remarks.' : 'Task status logged.')}
-                  </span>
-                </div>
+            <div style={styles.filterGroup}>
+              <Filter size={16} color="#94a3b8" />
+              <select
+                value={actionFilter}
+                onChange={(e) => setActionFilter(e.target.value)}
+                style={styles.filterSelect}
+              >
+                <option value="ALL">All Actions</option>
+                <option value="START">Start</option>
+                <option value="PAUSE">Pause</option>
+                <option value="RESUME">Resume</option>
+                <option value="STOP">Stop</option>
+                <option value="LOGGED">Logged</option>
+              </select>
+            </div>
+          </div>
 
-                {/* Footer Metadata */}
-                <div style={styles.cardFooter}>
-                  <div style={styles.metaItem}>
-                    <FolderKanban size={13} color="#64748b" />
-                    <span>{log.projectName}</span>
+          {/* Timeline Stream List */}
+          {loading ? (
+            <div style={styles.loadingBox}>
+              <Clock size={28} className="spin" color="#3b82f6" />
+              <span>Loading time log stream...</span>
+            </div>
+          ) : filteredLogs.length === 0 ? (
+            <div style={styles.emptyBox}>
+              <Clock size={36} color="#64748b" />
+              <p>No timer logs match your query.</p>
+            </div>
+          ) : (
+            <div style={styles.logList}>
+              {filteredLogs.map((log, index) => {
+                const badge = getActionBadge(log.action);
+                const BadgeIcon = badge.icon;
+                return (
+                  <div key={log.id || index} style={styles.logCard}>
+                    <div style={styles.cardHeader}>
+                      <div style={styles.taskInfo}>
+                        <span style={styles.taskCode}>{log.taskCode}</span>
+                        <span style={styles.taskTitle}>{log.taskTitle}</span>
+                      </div>
+                      <div
+                        style={{
+                          ...styles.actionBadge,
+                          backgroundColor: badge.bg,
+                          color: badge.color,
+                          border: `1px solid ${badge.border}`,
+                        }}
+                      >
+                        <BadgeIcon size={12} />
+                        <span>{badge.label}</span>
+                      </div>
+                    </div>
+
+                    <div style={styles.remarksBox}>
+                      <FileText size={14} color="#94a3b8" />
+                      <span style={styles.remarksText}>
+                        {log.remarks || 'Work activity logged.'}
+                      </span>
+                    </div>
+
+                    <div style={styles.cardFooter}>
+                      <div style={styles.metaItem}>
+                        <FolderKanban size={13} color="#64748b" />
+                        <span>{log.projectName}</span>
+                      </div>
+                      <div style={styles.metaItem}>
+                        <User size={13} color="#64748b" />
+                        <span>{log.userName || 'System User'}</span>
+                      </div>
+                      <div style={styles.metaItem}>
+                        <Calendar size={13} color="#64748b" />
+                        <span>{new Date(log.createdAt).toLocaleString()}</span>
+                      </div>
+                      {log.hours && (
+                        <div style={{ ...styles.metaItem, marginLeft: 'auto', color: '#60a5fa', fontWeight: '700' }}>
+                          <Clock size={13} color="#60a5fa" />
+                          <span>{parseFloat(log.hours).toFixed(1)} hrs</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div style={styles.metaItem}>
-                    <User size={13} color="#64748b" />
-                    <span>{log.userName || log.user?.firstName || 'System User'}</span>
-                  </div>
-                  <div style={styles.metaItem}>
-                    <Calendar size={13} color="#64748b" />
-                    <span>{new Date(log.createdAt).toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -245,7 +339,12 @@ const styles = {
     color: '#f8fafc',
   },
   header: {
-    marginBottom: '20px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '24px',
+    flexWrap: 'wrap',
+    gap: '16px',
   },
   title: {
     fontSize: '1.4rem',
@@ -257,6 +356,46 @@ const styles = {
     fontSize: '0.85rem',
     color: '#94a3b8',
     marginTop: '4px',
+  },
+  tabToggleGroup: {
+    display: 'flex',
+    backgroundColor: '#0b0f19',
+    borderRadius: '8px',
+    padding: '4px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+  },
+  tabBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '8px 16px',
+    borderRadius: '6px',
+    border: 'none',
+    backgroundColor: 'transparent',
+    color: '#94a3b8',
+    fontSize: '0.82rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  },
+  activeTabBtn: {
+    backgroundColor: '#2563eb',
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  logTimeBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    backgroundColor: '#2563eb',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '10px 18px',
+    fontSize: '0.85rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
   },
   toolbar: {
     display: 'flex',
@@ -330,7 +469,6 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
-    transition: 'border-color 0.15s ease',
   },
   cardHeader: {
     display: 'flex',
