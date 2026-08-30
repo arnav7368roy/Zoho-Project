@@ -276,21 +276,19 @@ export default function Header() {
       {/* Sub-Navigation Tabs Row */}
       <div style={styles.tabsRow}>
         <div style={styles.tabsList}>
-          {projectTabs.map((tab) => {
-            const isActive = location.pathname === tab.path;
-            return (
-              <NavLink
-                key={tab.path}
-                to={tab.path}
-                style={{
-                  ...styles.tabItem,
-                  ...(isActive ? styles.activeTabItem : {}),
-                }}
-              >
-                {tab.name}
-              </NavLink>
-            );
-          })}
+          {projectTabs.map((tab) => (
+            <NavLink
+              key={tab.path}
+              to={tab.path}
+              end={tab.path === '/'}
+              style={({ isActive }) => ({
+                ...styles.tabItem,
+                ...(isActive ? styles.activeTabItem : {}),
+              })}
+            >
+              {tab.name}
+            </NavLink>
+          ))}
         </div>
       </div>
     </header>
