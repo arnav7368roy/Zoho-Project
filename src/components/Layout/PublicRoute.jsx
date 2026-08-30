@@ -10,7 +10,8 @@ export default function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   const hasToken = localStorage.getItem('access_token');
 
-  if (loading && !hasToken) {
+  // Always wait for auth resolution before making any redirect decision
+  if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--text-muted)' }}>
         Loading session...

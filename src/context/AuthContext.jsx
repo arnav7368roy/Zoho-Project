@@ -143,7 +143,7 @@ export function AuthProvider({ children }) {
         checkUserSession,
       }}
     >
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
