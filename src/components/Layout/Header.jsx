@@ -73,68 +73,87 @@ export default function Header() {
     fetchNotifications();
   }, []);
 
-  // Close dropdown on outside click
+  // Global Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState({ tasks: [], issues: [], projects: [] });
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const searchRef = useRef(null);
+
+  // Close search & notification dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(e) {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setShowNotifDropdown(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSearchDropdown(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleBellClick = () => {
-    setShowNotifDropdown((prev) => !prev);
-    if (!showNotifDropdown) {
-      fetchNotifications();
+  // Fetch Global Search Results
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults({ tasks: [], issues: [], projects: [] });
+      setShowSearchDropdown(false);
+      return;
     }
-  };
 
-  const handleMarkAllRead = async () => {
-    // Optimistic update
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    setUnreadCount(0);
-    // Call backend
-    await apiRequest('/api/v1/notifications/read-all', 'PATCH');
-  };
+    setShowSearchDropdown(true);
+    setSearchLoading(true);
 
-  const handleMarkOneRead = async (id) => {
-    // Only mark if currently unread
-    const notif = notifications.find((n) => n.id === id);
-    if (!notif || notif.isRead) return;
-    // Optimistic update
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
-    setUnreadCount((prev) => Math.max(0, prev - 1));
-    // Call backend
-    await apiRequest(`/api/v1/notifications/${id}/read`, 'PATCH');
-  };
+    const timer = setTimeout(async () => {
+      try {
+        const [taskRes, issueRes, projRes] = await Promise.all([
+          apiRequest('/api/v1/tasks'),
+          apiRequest('/api/v1/issues'),
+          apiRequest('/api/v1/projects'),
+        ]);
 
-  const handleViewAll = () => {
-    setShowNotifDropdown(false);
-    navigate('/notifications');
-  };
+        const q = searchQuery.toLowerCase().trim();
 
-  const getNotifIcon = (type) => {
-    switch (type) {
-      case 'TASK_ASSIGNED': return <CheckSquare size={14} color="#3b82f6" />;
-      case 'ISSUE': return <AlertCircle size={14} color="#ef4444" />;
-      case 'TIMER': return <Clock size={14} color="#22c55e" />;
-      default: return <Bell size={14} color="#94a3b8" />;
-    }
-  };
+        const tasks = taskRes.ok && taskRes.data?.data
+          ? taskRes.data.data.filter(
+              (t) =>
+                t.title?.toLowerCase().includes(q) ||
+                t.taskCode?.toLowerCase().includes(q) ||
+                t.projectName?.toLowerCase().includes(q)
+            ).slice(0, 5)
+          : [];
 
-  const timeAgo = (dateStr) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return 'just now';
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-  };
+        const issues = issueRes.ok && issueRes.data?.data
+          ? issueRes.data.data.filter(
+              (i) =>
+                i.title?.toLowerCase().includes(q) ||
+                i.issueCode?.toLowerCase().includes(q) ||
+                i.projectName?.toLowerCase().includes(q)
+            ).slice(0, 5)
+          : [];
+
+        const projects = projRes.ok && projRes.data?.data
+          ? projRes.data.data.filter(
+              (p) =>
+                p.projectName?.toLowerCase().includes(q) ||
+                p.projectCode?.toLowerCase().includes(q)
+            ).slice(0, 5)
+          : [];
+
+        setSearchResults({ tasks, issues, projects });
+      } catch (err) {
+        console.error('Global search error:', err);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const totalResultsCount =
+    searchResults.tasks.length + searchResults.issues.length + searchResults.projects.length;
 
   return (
     <header style={styles.headerContainer}>
@@ -152,13 +171,118 @@ export default function Header() {
 
         {/* Header Right Actions */}
         <div style={styles.rightActions}>
-          <div style={styles.searchBox}>
-            <Search size={14} color="#94a3b8" />
-            <input
-              type="text"
-              placeholder="Search..."
-              style={styles.searchInput}
-            />
+          {/* ---- GLOBAL SEARCH BAR ---- */}
+          <div style={{ position: 'relative' }} ref={searchRef}>
+            <div style={styles.searchBox}>
+              <Search size={14} color="#94a3b8" />
+              <input
+                type="text"
+                placeholder="Search tasks, issues, projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => {
+                  if (searchQuery.trim()) setShowSearchDropdown(true);
+                }}
+                style={styles.searchInput}
+              />
+              {searchQuery && (
+                <X
+                  size={14}
+                  color="#94a3b8"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowSearchDropdown(false);
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Global Search Results Dropdown Popup */}
+            {showSearchDropdown && (
+              <div style={styles.searchDropdownPopup}>
+                {searchLoading ? (
+                  <div style={styles.searchStatusMsg}>Searching workspace...</div>
+                ) : totalResultsCount === 0 ? (
+                  <div style={styles.searchStatusMsg}>
+                    No tasks, issues, or projects matching "{searchQuery}"
+                  </div>
+                ) : (
+                  <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
+                    {/* Issues Category */}
+                    {searchResults.issues.length > 0 && (
+                      <div style={styles.searchGroup}>
+                        <div style={styles.searchGroupTitle}>🐛 Issues ({searchResults.issues.length})</div>
+                        {searchResults.issues.map((iss) => (
+                          <div
+                            key={iss.id}
+                            style={styles.searchResultItem}
+                            onClick={() => {
+                              setShowSearchDropdown(false);
+                              setSearchQuery('');
+                              navigate('/issues');
+                            }}
+                          >
+                            <span style={{ fontWeight: '700', color: '#60a5fa', fontSize: '0.78rem' }}>
+                              {iss.issueCode || 'SD2-I1005'}
+                            </span>
+                            <span style={styles.resultTitleText}>{iss.title}</span>
+                            <span style={styles.resultBadgePill}>{iss.status || 'OPEN'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Tasks Category */}
+                    {searchResults.tasks.length > 0 && (
+                      <div style={styles.searchGroup}>
+                        <div style={styles.searchGroupTitle}>📌 Tasks ({searchResults.tasks.length})</div>
+                        {searchResults.tasks.map((t) => (
+                          <div
+                            key={t.id}
+                            style={styles.searchResultItem}
+                            onClick={() => {
+                              setShowSearchDropdown(false);
+                              setSearchQuery('');
+                              navigate('/tasks');
+                            }}
+                          >
+                            <span style={{ fontWeight: '700', color: '#3b82f6', fontSize: '0.78rem' }}>
+                              {t.taskCode || 'TSK'}
+                            </span>
+                            <span style={styles.resultTitleText}>{t.title}</span>
+                            <span style={styles.resultBadgePill}>{t.status || 'TO_DO'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Projects Category */}
+                    {searchResults.projects.length > 0 && (
+                      <div style={styles.searchGroup}>
+                        <div style={styles.searchGroupTitle}>📁 Projects ({searchResults.projects.length})</div>
+                        {searchResults.projects.map((p) => (
+                          <div
+                            key={p.id}
+                            style={styles.searchResultItem}
+                            onClick={() => {
+                              setShowSearchDropdown(false);
+                              setSearchQuery('');
+                              navigate('/');
+                            }}
+                          >
+                            <span style={{ fontWeight: '700', color: '#eab308', fontSize: '0.78rem' }}>
+                              {p.projectCode || 'PRJ'}
+                            </span>
+                            <span style={styles.resultTitleText}>{p.projectName}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <button onClick={toggleTheme} style={styles.iconBtn} title="Toggle Theme">
@@ -329,10 +453,11 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
     borderRadius: '6px',
     padding: '4px 10px',
-    width: '180px',
+    width: '240px',
+    transition: 'all 0.2s ease',
   },
   searchInput: {
     background: 'none',
@@ -341,6 +466,60 @@ const styles = {
     fontSize: '0.82rem',
     outline: 'none',
     width: '100%',
+  },
+  searchDropdownPopup: {
+    position: 'absolute',
+    top: '42px',
+    left: 0,
+    width: '380px',
+    backgroundColor: '#0f172a',
+    borderRadius: '8px',
+    boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+    border: '1px solid #1e293b',
+    zIndex: 1000,
+    overflow: 'hidden',
+  },
+  searchStatusMsg: {
+    padding: '16px',
+    fontSize: '0.82rem',
+    color: '#94a3b8',
+    textAlign: 'center',
+  },
+  searchGroup: {
+    borderBottom: '1px solid #1e293b',
+  },
+  searchGroupTitle: {
+    padding: '8px 14px',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    color: '#94a3b8',
+    backgroundColor: '#090d16',
+    letterSpacing: '0.5px',
+  },
+  searchResultItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '10px 14px',
+    cursor: 'pointer',
+    borderBottom: '1px solid #1e293b',
+    transition: 'background 0.15s ease',
+  },
+  resultTitleText: {
+    flex: 1,
+    fontSize: '0.82rem',
+    color: '#f8fafc',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  resultBadgePill: {
+    fontSize: '0.68rem',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    backgroundColor: '#1e293b',
+    color: '#94a3b8',
+    fontWeight: '600',
   },
   iconBtn: {
     background: 'rgba(255, 255, 255, 0.05)',
