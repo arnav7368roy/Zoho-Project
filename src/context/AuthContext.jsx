@@ -115,25 +115,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const loginWithKeycloak = async (keycloakToken) => {
-    try {
-      localStorage.setItem('access_token', keycloakToken);
-      const meRes = await apiRequest('/api/v1/auth/me');
-      if (meRes.ok && meRes.data && meRes.data.status) {
-        const userData = meRes.data.data;
-        setUser(userData);
-        localStorage.setItem('user_info', JSON.stringify(userData));
-        return { success: true };
-      } else {
-        const fallbackUser = { name: 'SSO User' };
-        setUser(fallbackUser);
-        localStorage.setItem('user_info', JSON.stringify(fallbackUser));
-        return { success: true };
-      }
-    } catch (err) {
-      return { success: false, message: 'Keycloak SSO connection error.' };
-    }
-  };
+
 
   const logout = async () => {
     try {
@@ -153,7 +135,6 @@ export function AuthProvider({ children }) {
         user,
         loading,
         login,
-        loginWithKeycloak,
         logout,
         checkUserSession,
       }}

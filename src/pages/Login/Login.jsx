@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Zap, ShieldCheck, Key, Lock, Mail, ArrowRight } from 'lucide-react';
+import { Zap, Key, Lock, Mail, ArrowRight } from 'lucide-react';
 
 export default function Login() {
-  const [authMode, setAuthMode] = useState('standard'); // 'standard' or 'keycloak'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [keycloakToken, setKeycloakToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login, loginWithKeycloak, user } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
 
   // Already logged-in? -> Redirect to Dashboard
@@ -24,27 +22,13 @@ export default function Login() {
     setError('');
     setLoading(true);
 
-    if (authMode === 'standard') {
-      const res = await login(email, password);
-      setLoading(false);
-      if (res.success) {
-        navigate('/');
-      } else {
-        setError(res.message);
-      }
+    const res = await login(email, password);
+    setLoading(false);
+
+    if (res.success) {
+      navigate('/');
     } else {
-      if (!keycloakToken.trim()) {
-        setError('Please enter a Keycloak SSO Token');
-        setLoading(false);
-        return;
-      }
-      const res = await loginWithKeycloak(keycloakToken);
-      setLoading(false);
-      if (res.success) {
-        navigate('/');
-      } else {
-        setError(res.message);
-      }
+      setError(res.message);
     }
   };
 
@@ -57,33 +41,7 @@ export default function Login() {
             <Zap size={28} color="#ffffff" />
           </div>
           <h1 style={styles.title}>WorkMatrix Projects</h1>
-          <p style={styles.subtitle}>Sign in with your HRMS Credentials or Keycloak SSO</p>
-        </div>
-
-        {/* Mode Selector */}
-        <div style={styles.modeTabs}>
-          <button
-            type="button"
-            onClick={() => setAuthMode('standard')}
-            style={{
-              ...styles.tabBtn,
-              ...(authMode === 'standard' ? styles.activeTab : {}),
-            }}
-          >
-            <Lock size={16} />
-            <span>Standard Login</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setAuthMode('keycloak')}
-            style={{
-              ...styles.tabBtn,
-              ...(authMode === 'keycloak' ? styles.activeTab : {}),
-            }}
-          >
-            <ShieldCheck size={16} />
-            <span>Keycloak SSO</span>
-          </button>
+          <p style={styles.subtitle}>Sign in with your HRMS credentials</p>
         </div>
 
         {/* Error Alert */}
@@ -95,60 +53,37 @@ export default function Login() {
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} style={styles.form}>
-          {authMode === 'standard' ? (
-            <>
-              <div className="form-group">
-                <label>Work Email Address</label>
-                <div style={styles.inputWrapper}>
-                  <Mail size={18} color="var(--text-muted)" style={styles.inputIcon} />
-                  <input
-                    type="email"
-                    required
-                    placeholder="name@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="form-input"
-                    style={{ paddingLeft: '40px' }}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Password</label>
-                <div style={styles.inputWrapper}>
-                  <Key size={18} color="var(--text-muted)" style={styles.inputIcon} />
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="form-input"
-                    style={{ paddingLeft: '40px' }}
-                  />
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="form-group">
-              <label>Keycloak OIDC Bearer Token</label>
-              <div style={styles.inputWrapper}>
-                <ShieldCheck size={18} color="#10b981" style={styles.inputIcon} />
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="Paste Keycloak Access Token (eyJhbGci...)"
-                  value={keycloakToken}
-                  onChange={(e) => setKeycloakToken(e.target.value)}
-                  className="form-input"
-                  style={{ paddingLeft: '40px', fontFamily: 'monospace', fontSize: '0.82rem' }}
-                />
-              </div>
-              <span style={styles.hintText}>
-                Keycloak realm is configured as <code>zoho-realm</code> at <code>http://localhost:8080</code>
-              </span>
+          <div className="form-group">
+            <label>Work Email Address</label>
+            <div style={styles.inputWrapper}>
+              <Mail size={18} color="var(--text-muted)" style={styles.inputIcon} />
+              <input
+                type="email"
+                required
+                placeholder="name@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="form-input"
+                style={{ paddingLeft: '40px' }}
+              />
             </div>
-          )}
+          </div>
+
+          <div className="form-group">
+            <label>Password</label>
+            <div style={styles.inputWrapper}>
+              <Lock size={18} color="var(--text-muted)" style={styles.inputIcon} />
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="form-input"
+                style={{ paddingLeft: '40px' }}
+              />
+            </div>
+          </div>
 
           <button
             type="submit"
@@ -171,7 +106,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'radial-gradient(circle at top right, rgba(59, 130, 246, 0.15), transparent), radial-gradient(circle at bottom left, rgba(139, 92, 246, 0.15), transparent), var(--bg-main)',
+    background:
+      'radial-gradient(circle at top right, rgba(59, 130, 246, 0.15), transparent), radial-gradient(circle at bottom left, rgba(139, 92, 246, 0.15), transparent), var(--bg-main)',
     padding: '20px',
   },
   card: {
@@ -182,7 +118,7 @@ const styles = {
   },
   brandHeader: {
     textAlign: 'center',
-    marginBottom: '24px',
+    marginBottom: '28px',
   },
   logoIcon: {
     width: '52px',
@@ -204,35 +140,6 @@ const styles = {
     fontSize: '0.88rem',
     color: 'var(--text-muted)',
     marginTop: '4px',
-  },
-  modeTabs: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '8px',
-    backgroundColor: 'var(--bg-input)',
-    padding: '4px',
-    borderRadius: '12px',
-    marginBottom: '20px',
-  },
-  tabBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    padding: '8px',
-    borderRadius: '8px',
-    border: 'none',
-    background: 'none',
-    color: 'var(--text-muted)',
-    fontSize: '0.85rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  activeTab: {
-    backgroundColor: 'var(--bg-card)',
-    color: 'var(--text-main)',
-    boxShadow: 'var(--shadow-sm)',
   },
   errorAlert: {
     backgroundColor: 'rgba(239, 68, 68, 0.15)',
@@ -256,10 +163,5 @@ const styles = {
     position: 'absolute',
     left: '12px',
     zIndex: 2,
-  },
-  hintText: {
-    fontSize: '0.78rem',
-    color: 'var(--text-subtle)',
-    marginTop: '4px',
   },
 };
