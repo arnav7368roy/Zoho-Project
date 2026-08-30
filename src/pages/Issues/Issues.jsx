@@ -30,6 +30,9 @@ import {
   History,
   FileText,
   Layers,
+  Play,
+  Pause,
+  Square,
 } from 'lucide-react';
 import FilterPanel from '../../components/FilterPanel';
 import ManualLogHoursModal from '../../components/ManualLogHoursModal';
@@ -68,6 +71,44 @@ export default function Issues() {
   const [activeTab, setActiveTab] = useState('Comments');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState(null);
   const [statusFilter, setStatusFilter] = useState('ALL');
+
+  // Live Timer State for Issues
+  const [runningIssueId, setRunningIssueId] = useState(null);
+  const [activeTimerSeconds, setActiveTimerSeconds] = useState(0);
+
+  // Interval for Live Timer Ticking
+  useEffect(() => {
+    let interval = null;
+    if (runningIssueId) {
+      interval = setInterval(() => {
+        setActiveTimerSeconds((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setActiveTimerSeconds(0);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [runningIssueId]);
+
+  const formatSeconds = (sec) => {
+    const hrs = Math.floor(sec / 3600);
+    const mins = Math.floor((sec % 3600) / 60);
+    const secs = sec % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleIssueTimerAction = (iss, action) => {
+    if (action === 'START') {
+      setRunningIssueId(iss.id);
+    } else if (action === 'PAUSE') {
+      setRunningIssueId(null);
+    } else if (action === 'STOP') {
+      setRunningIssueId(null);
+      setSelectedIssue(iss);
+      setShowLogModal(true);
+    }
+  };
 
   // Form state (Matching Screenshots 1 & 2)
   const [projectId, setProjectId] = useState('');
@@ -351,6 +392,14 @@ export default function Issues() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Running Timer Pill */}
+          {runningIssueId && (
+            <div style={styles.runningTimerPill}>
+              <Clock size={14} className="spin" />
+              <span>Running: <strong>{formatSeconds(activeTimerSeconds)}</strong></span>
+            </div>
+          )}
+
           {/* View Toggle */}
           <div style={styles.viewToggleGroup}>
             <button
@@ -416,20 +465,19 @@ export default function Issues() {
                 backgroundColor: '#1e293b',
                 color: '#60a5fa',
                 borderRadius: '16px',
-                fontSize: '0.78rem',
+                fontSize: '0.75rem',
+                fontWeight: '600',
                 border: '1px solid #334155',
               }}
             >
-              <strong>{cat}:</strong> {vals.join(', ')}
+              <span style={{ color: '#94a3b8' }}>{cat}:</span> {Array.isArray(vals) ? vals.join(', ') : vals}
               <X
                 size={12}
                 style={{ cursor: 'pointer', marginLeft: '4px' }}
                 onClick={() => {
-                  setAppliedFilters((prev) => {
-                    const copy = { ...prev };
-                    delete copy[cat];
-                    return copy;
-                  });
+                  const updated = { ...appliedFilters };
+                  delete updated[cat];
+                  setAppliedFilters(updated);
                 }}
               />
             </span>
@@ -479,6 +527,7 @@ export default function Issues() {
                 <th style={{ width: '35px' }}>
                   <input type="checkbox" />
                 </th>
+                <th style={{ width: '130px' }}>Timer & Action</th>
                 <th style={{ width: '100px' }}>ID</th>
                 <th>Issue Name</th>
                 <th style={{ width: '150px' }}>Reporter</th>
@@ -495,7 +544,7 @@ export default function Issues() {
             <tbody>
               {filteredIssues.length === 0 ? (
                 <tr>
-                  <td colSpan={12} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                  <td colSpan={13} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
                     {issues.length === 0 ? 'No issues logged in this project.' : `No ${statusFilter === 'ALL' ? '' : statusFilter.replace('_', ' ').toLowerCase() + ' '}issues found.`}
                   </td>
                 </tr>
@@ -503,6 +552,7 @@ export default function Issues() {
                 filteredIssues.map((iss, idx) => {
                   const sObj = statusOptions.find((s) => s.value === iss.status) || statusOptions[0];
                   const code = iss.issueCode || `SD2-I${1163 - idx}`;
+                  const isRunning = runningIssueId === iss.id;
                   return (
                     <tr
                       key={iss.id}
@@ -515,6 +565,44 @@ export default function Issues() {
                       <td>
                         <input type="checkbox" onClick={(e) => e.stopPropagation()} />
                       </td>
+
+                      {/* Interactive Timer & Action Column */}
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {isRunning ? (
+                            <button
+                              onClick={() => handleIssueTimerAction(iss, 'PAUSE')}
+                              style={styles.iconBtnYellow}
+                              title="Pause Timer"
+                            >
+                              <Pause size={12} />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleIssueTimerAction(iss, 'START')}
+                              style={styles.iconBtnGreen}
+                              title="Start / Resume Timer"
+                            >
+                              <Play size={12} />
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => handleIssueTimerAction(iss, 'STOP')}
+                            style={styles.iconBtnRed}
+                            title="Stop Timer & Log Time"
+                          >
+                            <Square size={12} />
+                          </button>
+
+                          {isRunning && (
+                            <span style={{ fontSize: '0.72rem', color: '#4ade80', fontWeight: '800', fontFamily: 'monospace' }}>
+                              {formatSeconds(activeTimerSeconds)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
                       <td style={{ fontWeight: '700', color: '#60a5fa' }}>{code}</td>
                       <td style={{ fontWeight: '600', color: '#ffffff' }}>{iss.title}</td>
                       <td style={{ color: '#cbd5e1', fontSize: '0.82rem' }}>
@@ -1890,5 +1978,52 @@ const styles = {
     padding: '8px 16px',
     fontSize: '0.85rem',
     cursor: 'pointer',
+  },
+  iconBtnGreen: {
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    border: '1px solid rgba(34, 197, 94, 0.4)',
+    color: '#22c55e',
+    width: '24px',
+    height: '24px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+  },
+  iconBtnYellow: {
+    backgroundColor: 'rgba(234, 179, 8, 0.15)',
+    border: '1px solid rgba(234, 179, 8, 0.4)',
+    color: '#eab308',
+    width: '24px',
+    height: '24px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+  },
+  iconBtnRed: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    border: '1px solid rgba(239, 68, 68, 0.4)',
+    color: '#ef4444',
+    width: '24px',
+    height: '24px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+  },
+  runningTimerPill: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    border: '1px solid rgba(34, 197, 94, 0.4)',
+    color: '#22c55e',
+    padding: '4px 12px',
+    borderRadius: '20px',
+    fontSize: '0.82rem',
   },
 };
