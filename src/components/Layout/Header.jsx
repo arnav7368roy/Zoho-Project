@@ -547,7 +547,7 @@ const styles = {
     fontWeight: '600',
     color: '#94a3b8',
     textDecoration: 'none',
-    borderBottom: '2px solid transparent',
+    borderBottom: '2px solid #090d16',
     transition: 'all 0.15s ease',
     whiteSpace: 'nowrap',
   },
