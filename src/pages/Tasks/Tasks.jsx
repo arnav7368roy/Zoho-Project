@@ -721,7 +721,7 @@ export default function Tasks() {
             </table>
           </div>
         </div>
-      ) : (
+      ) : viewMode === 'kanban' ? (
         /* KANBAN BOARD */
         <div style={styles.kanbanBoard}>
           {['TO_DO', 'IN_PROGRESS', 'DEV_COMPLETE', 'READY_FOR_QA'].map((colId) => {
@@ -779,7 +779,8 @@ export default function Tasks() {
                   ))}
                 </div>
               </div>
-                 })}
+            );
+          })}
         </div>
       ) : (
         /* DETAIL SPLIT VIEW (Matching Zoho Projects Issue & Task Detail View) */
@@ -1153,8 +1154,7 @@ export default function Tasks() {
         onLogSaved={(newLog) => {
           setTaskLogs((prev) => [newLog, ...prev]);
         }}
-      />>
-      )}
+      />
 
       {/* EDIT TASK DRAWER */}
       {showEditDrawer && editingTask && (
