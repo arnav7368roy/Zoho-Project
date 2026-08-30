@@ -8,52 +8,53 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // On app load / refresh: just read from localStorage — NO API call
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      try {
-        const savedUser = localStorage.getItem('user_info');
-        setUser(savedUser ? JSON.parse(savedUser) : { name: 'User' });
-      } catch {
-        setUser({ name: 'User' });
-      }
-    } else {
-      setUser(null);
-    }
-    setLoading(false);
+    // Backend uses HttpOnly cookies — check session via /me endpoint
+    // credentials: 'include' sends the cookie automatically (set in api.js)
+    checkSession();
   }, []);
+
+  const checkSession = async () => {
+    try {
+      const res = await apiRequest('/api/v1/auth/me');
+      if (res.ok && res.data) {
+        const userData = res.data.data || res.data.user || res.data;
+        if (userData && typeof userData === 'object') {
+          setUser(userData);
+        } else {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (email, password) => {
     try {
       const res = await apiRequest('/api/v1/auth/login', 'POST', { email, password });
       if (res.ok && res.data && res.data.status) {
-        const token = res.data.data?.access_token || res.data.access_token;
-        if (token) {
-          localStorage.setItem('access_token', token);
-        }
-
-        // Try to get user info
+        // Backend sets HttpOnly cookie — now fetch user info
         const meRes = await apiRequest('/api/v1/auth/me');
         if (meRes.ok && meRes.data) {
           const userData = meRes.data.data || meRes.data.user || meRes.data;
           if (userData && typeof userData === 'object') {
             setUser(userData);
-            localStorage.setItem('user_info', JSON.stringify(userData));
             return { success: true };
           }
         }
-
-        // Fallback user if /me fails
-        const fallback = { email, name: email.split('@')[0] };
-        setUser(fallback);
-        localStorage.setItem('user_info', JSON.stringify(fallback));
+        // Fallback if /me fails
+        setUser({ email, name: email.split('@')[0] });
         return { success: true };
       }
       return {
         success: false,
         message: res.data?.message || 'Login failed. Please check your credentials.',
       };
-    } catch (err) {
+    } catch {
       return { success: false, message: 'Server connection error.' };
     }
   };
@@ -64,8 +65,6 @@ export function AuthProvider({ children }) {
     } catch (err) {
       console.error('Logout API error:', err);
     } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user_info');
       setUser(null);
     }
   };

@@ -4,13 +4,11 @@ import { useAuth } from '../../context/AuthContext';
 
 /**
  * PublicRoute — accessible only to unauthenticated users.
- * If the user is already logged in, redirect them to the dashboard.
+ * If the user is already logged in (cookie session active), redirect to dashboard.
  */
 export default function PublicRoute({ children }) {
   const { user, loading } = useAuth();
-  const hasToken = localStorage.getItem('access_token');
 
-  // Always wait for auth resolution before making any redirect decision
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--text-muted)' }}>
@@ -19,7 +17,7 @@ export default function PublicRoute({ children }) {
     );
   }
 
-  if (user || hasToken) {
+  if (user) {
     return <Navigate to="/" replace />;
   }
 
