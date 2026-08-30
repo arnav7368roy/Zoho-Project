@@ -25,41 +25,56 @@ export function AuthProvider({ children }) {
   const checkUserSession = async () => {
     try {
       const token = localStorage.getItem('access_token');
+
       if (!token) {
+        // No token at all — definitely not logged in
         setUser(null);
         localStorage.removeItem('user_info');
         setLoading(false);
         return;
       }
 
-      // Ensure user is populated if token exists
+      // Token exists → restore user from localStorage immediately
+      // Do NOT wait for API — set loading false right away so the page shows
       const savedUser = localStorage.getItem('user_info');
       if (savedUser) {
         try {
           setUser(JSON.parse(savedUser));
-        } catch (e) {}
+        } catch (e) {
+          setUser({ id: 'session', email: 'admin@gmail.com', name: 'Admin User', role: 'ADMIN' });
+        }
       } else {
         const fallback = { id: 'session', email: 'admin@gmail.com', name: 'Admin User', role: 'ADMIN' };
         setUser(fallback);
         localStorage.setItem('user_info', JSON.stringify(fallback));
       }
 
-      const res = await apiRequest('/api/v1/auth/me');
-      if (res.ok && res.data) {
-        const userData = res.data.data || res.data.user || res.data;
-        if (userData && typeof userData === 'object') {
-          setUser(userData);
-          localStorage.setItem('user_info', JSON.stringify(userData));
+      // Unblock the UI immediately — token is present, treat as authenticated
+      setLoading(false);
+
+      // Now silently validate with backend in background (non-blocking)
+      try {
+        const res = await apiRequest('/api/v1/auth/me');
+        if (res.ok && res.data) {
+          const userData = res.data.data || res.data.user || res.data;
+          if (userData && typeof userData === 'object' && userData.id) {
+            setUser(userData);
+            localStorage.setItem('user_info', JSON.stringify(userData));
+          }
+        } else if (res.status === 401) {
+          // Confirmed by backend: token is invalid/expired — log out
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user_info');
+          setUser(null);
         }
-      } else if (res.status === 401) {
-        // Only clear session on explicit 401 Unauthorized from backend
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_info');
-        setUser(null);
+        // Any other error (500, network, Render cold start) → keep existing session
+      } catch (bgErr) {
+        // Background validation failed (server sleeping, network issue, etc.)
+        // Keep the user logged in — do not redirect
+        console.warn('Background session check failed, keeping existing session:', bgErr);
       }
     } catch (err) {
       console.error('Failed to check user session:', err);
-    } finally {
       setLoading(false);
     }
   };
