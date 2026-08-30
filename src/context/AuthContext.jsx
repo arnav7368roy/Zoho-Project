@@ -4,83 +4,23 @@ import { apiRequest } from '../utils/api';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // Synchronously initialize user from localStorage or fallback if access_token exists
-  const [user, setUser] = useState(() => {
-    try {
-      const token = localStorage.getItem('access_token');
-      if (!token) return null;
-      
-      const savedUser = localStorage.getItem('user_info');
-      if (savedUser) {
-        return JSON.parse(savedUser);
-      }
-      return { id: 'session', email: 'admin@gmail.com', name: 'Admin User', role: 'ADMIN' };
-    } catch (e) {
-      return { id: 'session', email: 'admin@gmail.com', name: 'Admin User', role: 'ADMIN' };
-    }
-  });
-
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const checkUserSession = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-
-      if (!token) {
-        // No token at all — definitely not logged in
-        setUser(null);
-        localStorage.removeItem('user_info');
-        setLoading(false);
-        return;
-      }
-
-      // Token exists → restore user from localStorage immediately
-      // Do NOT wait for API — set loading false right away so the page shows
-      const savedUser = localStorage.getItem('user_info');
-      if (savedUser) {
-        try {
-          setUser(JSON.parse(savedUser));
-        } catch (e) {
-          setUser({ id: 'session', email: 'admin@gmail.com', name: 'Admin User', role: 'ADMIN' });
-        }
-      } else {
-        const fallback = { id: 'session', email: 'admin@gmail.com', name: 'Admin User', role: 'ADMIN' };
-        setUser(fallback);
-        localStorage.setItem('user_info', JSON.stringify(fallback));
-      }
-
-      // Unblock the UI immediately — token is present, treat as authenticated
-      setLoading(false);
-
-      // Now silently validate with backend in background (non-blocking)
-      try {
-        const res = await apiRequest('/api/v1/auth/me');
-        if (res.ok && res.data) {
-          const userData = res.data.data || res.data.user || res.data;
-          if (userData && typeof userData === 'object' && userData.id) {
-            setUser(userData);
-            localStorage.setItem('user_info', JSON.stringify(userData));
-          }
-        } else if (res.status === 401) {
-          // Confirmed by backend: token is invalid/expired — log out
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('user_info');
-          setUser(null);
-        }
-        // Any other error (500, network, Render cold start) → keep existing session
-      } catch (bgErr) {
-        // Background validation failed (server sleeping, network issue, etc.)
-        // Keep the user logged in — do not redirect
-        console.warn('Background session check failed, keeping existing session:', bgErr);
-      }
-    } catch (err) {
-      console.error('Failed to check user session:', err);
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    checkUserSession();
+    // On app load / refresh: just read from localStorage — NO API call
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      try {
+        const savedUser = localStorage.getItem('user_info');
+        setUser(savedUser ? JSON.parse(savedUser) : { name: 'User' });
+      } catch {
+        setUser({ name: 'User' });
+      }
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
   }, []);
 
   const login = async (email, password) => {
@@ -91,20 +31,23 @@ export function AuthProvider({ children }) {
         if (token) {
           localStorage.setItem('access_token', token);
         }
-        
-        // Fetch User Info
+
+        // Try to get user info
         const meRes = await apiRequest('/api/v1/auth/me');
-        if (meRes.ok && meRes.data && meRes.data.status) {
-          const userData = meRes.data.data;
-          setUser(userData);
-          localStorage.setItem('user_info', JSON.stringify(userData));
-          return { success: true };
-        } else {
-          const fallbackUser = res.data.data?.user || { email, name: email.split('@')[0] };
-          setUser(fallbackUser);
-          localStorage.setItem('user_info', JSON.stringify(fallbackUser));
-          return { success: true };
+        if (meRes.ok && meRes.data) {
+          const userData = meRes.data.data || meRes.data.user || meRes.data;
+          if (userData && typeof userData === 'object') {
+            setUser(userData);
+            localStorage.setItem('user_info', JSON.stringify(userData));
+            return { success: true };
+          }
         }
+
+        // Fallback user if /me fails
+        const fallback = { email, name: email.split('@')[0] };
+        setUser(fallback);
+        localStorage.setItem('user_info', JSON.stringify(fallback));
+        return { success: true };
       }
       return {
         success: false,
@@ -114,8 +57,6 @@ export function AuthProvider({ children }) {
       return { success: false, message: 'Server connection error.' };
     }
   };
-
-
 
   const logout = async () => {
     try {
@@ -130,15 +71,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        logout,
-        checkUserSession,
-      }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
