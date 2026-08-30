@@ -48,24 +48,7 @@ export default function Issues() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
-  const [issueLogs, setIssueLogs] = useState([
-    {
-      id: 'log-1',
-      date: '2026-08-28',
-      userName: 'Arnav Roy',
-      hours: '3.0',
-      description: 'Initial analysis and reproduction of character encoding issue.',
-      billable: true,
-    },
-    {
-      id: 'log-2',
-      date: '2026-08-29',
-      userName: 'Laddu Kumar',
-      hours: '2.0',
-      description: 'Applied UTF-8 font fallback fix in PDF report exporter.',
-      billable: true,
-    },
-  ]);
+  const [issueLogs, setIssueLogs] = useState([]);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'detail'
   const [activeTab, setActiveTab] = useState('Comments');
@@ -944,52 +927,71 @@ export default function Issues() {
 
                   {/* Logged items list */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {issueLogs.map((log) => (
+                    {issueLogs.length === 0 ? (
                       <div
-                        key={log.id}
                         style={{
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #e2e8f0',
+                          textAlign: 'center',
+                          padding: '36px 20px',
+                          color: '#64748b',
+                          fontSize: '0.85rem',
+                          backgroundColor: '#f8fafc',
                           borderRadius: '8px',
-                          padding: '12px 16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
+                          border: '1px dashed #cbd5e1',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <Clock size={16} color="#3b82f6" />
-                          <div>
-                            <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>
-                              {log.description}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
-                              Logged by <strong>{log.userName}</strong> on {log.date}
+                        ⏱ No work hours logged yet for this issue.<br />
+                        <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '4px', display: 'inline-block' }}>
+                          Click <strong>+ Add Log Time</strong> above or use the timer to log effort.
+                        </span>
+                      </div>
+                    ) : (
+                      issueLogs.map((log) => (
+                        <div
+                          key={log.id}
+                          style={{
+                            backgroundColor: '#ffffff',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px',
+                            padding: '12px 16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <Clock size={16} color="#3b82f6" />
+                            <div>
+                              <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a' }}>
+                                {log.description}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                                Logged by <strong>{log.userName}</strong> on {log.date}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          {log.billable && (
-                            <span
-                              style={{
-                                backgroundColor: 'rgba(34, 197, 94, 0.15)',
-                                color: '#16a34a',
-                                fontSize: '0.7rem',
-                                fontWeight: '700',
-                                padding: '2px 8px',
-                                borderRadius: '4px',
-                              }}
-                            >
-                              Billable
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {log.billable && (
+                              <span
+                                style={{
+                                  backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                                  color: '#16a34a',
+                                  fontSize: '0.7rem',
+                                  fontWeight: '700',
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                }}
+                              >
+                                Billable
+                              </span>
+                            )}
+                            <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#2563eb' }}>
+                              {log.hours} hrs
                             </span>
-                          )}
-                          <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#2563eb' }}>
-                            {log.hours} hrs
-                          </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               ) : (

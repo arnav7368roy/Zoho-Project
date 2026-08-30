@@ -51,24 +51,7 @@ export default function Tasks() {
   const [activeTab, setActiveTab] = useState('Comments');
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
-  const [taskLogs, setTaskLogs] = useState([
-    {
-      id: 'log-1',
-      date: '2026-08-29',
-      userName: 'Arnav Roy',
-      hours: '2.5',
-      description: 'Refactored backend task status controller and optimized SQL queries.',
-      billable: true,
-    },
-    {
-      id: 'log-2',
-      date: '2026-08-30',
-      userName: 'Laddu Kumar',
-      hours: '4.0',
-      description: 'Implemented UI Glassmorphism dark mode theme and responsive drawer.',
-      billable: true,
-    },
-  ]);
+  const [taskLogs, setTaskLogs] = useState([]);
 
   // Live Timer State (Seconds count up for active tasks)
   const [activeTimerSeconds, setActiveTimerSeconds] = useState(0);
@@ -1057,52 +1040,71 @@ export default function Tasks() {
 
                   {/* Logged items list */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {taskLogs.map((log) => (
+                    {taskLogs.length === 0 ? (
                       <div
-                        key={log.id}
                         style={{
+                          textAlign: 'center',
+                          padding: '36px 20px',
+                          color: '#94a3b8',
+                          fontSize: '0.85rem',
                           backgroundColor: '#0f172a',
-                          border: '1px solid rgba(255, 255, 255, 0.08)',
                           borderRadius: '8px',
-                          padding: '12px 16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
+                          border: '1px dashed rgba(255, 255, 255, 0.1)',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <Clock size={16} color="#3b82f6" />
-                          <div>
-                            <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f8fafc' }}>
-                              {log.description}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
-                              Logged by <strong>{log.userName}</strong> on {log.date}
+                        ⏱ No work hours logged yet for this task.<br />
+                        <span style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px', display: 'inline-block' }}>
+                          Click <strong>+ Add Log Time</strong> above or use the timer to log effort.
+                        </span>
+                      </div>
+                    ) : (
+                      taskLogs.map((log) => (
+                        <div
+                          key={log.id}
+                          style={{
+                            backgroundColor: '#0f172a',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '8px',
+                            padding: '12px 16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <Clock size={16} color="#3b82f6" />
+                            <div>
+                              <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f8fafc' }}>
+                                {log.description}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                                Logged by <strong>{log.userName || log.user}</strong> on {log.date}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          {log.billable && (
-                            <span
-                              style={{
-                                backgroundColor: 'rgba(34, 197, 94, 0.15)',
-                                color: '#4ade80',
-                                fontSize: '0.7rem',
-                                fontWeight: '700',
-                                padding: '2px 8px',
-                                borderRadius: '4px',
-                              }}
-                            >
-                              Billable
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {log.billable && (
+                              <span
+                                style={{
+                                  backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                                  color: '#4ade80',
+                                  fontSize: '0.7rem',
+                                  fontWeight: '700',
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                }}
+                              >
+                                Billable
+                              </span>
+                            )}
+                            <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#60a5fa' }}>
+                              {log.hours} hrs
                             </span>
-                          )}
-                          <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#60a5fa' }}>
-                            {log.hours} hrs
-                          </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               ) : (
