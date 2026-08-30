@@ -152,6 +152,53 @@ export default function Header() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const handleBellClick = () => {
+    setShowNotifDropdown((prev) => !prev);
+    if (!showNotifDropdown) {
+      fetchNotifications();
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setUnreadCount(0);
+    await apiRequest('/api/v1/notifications/read-all', 'PATCH');
+  };
+
+  const handleMarkOneRead = async (id) => {
+    const notif = notifications.find((n) => n.id === id);
+    if (!notif || notif.isRead) return;
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+    await apiRequest(`/api/v1/notifications/${id}/read`, 'PATCH');
+  };
+
+  const handleViewAll = () => {
+    setShowNotifDropdown(false);
+    navigate('/notifications');
+  };
+
+  const getNotifIcon = (type) => {
+    switch (type) {
+      case 'TASK_ASSIGNED': return <CheckSquare size={14} color="#3b82f6" />;
+      case 'ISSUE': return <AlertCircle size={14} color="#ef4444" />;
+      case 'TIMER': return <Clock size={14} color="#22c55e" />;
+      default: return <Bell size={14} color="#94a3b8" />;
+    }
+  };
+
+  const timeAgo = (dateStr) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
+
   const totalResultsCount =
     searchResults.tasks.length + searchResults.issues.length + searchResults.projects.length;
 
