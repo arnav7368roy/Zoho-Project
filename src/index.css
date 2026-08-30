@@ -359,15 +359,56 @@ table tr:hover td {
   background-color: rgba(255, 255, 255, 0.02);
 }
 
-/* Header Nav Tabs — remove ALL browser default underlines in every state */
-.nav-tab-link,
+/* Header Nav Tabs — fully CSS-driven, immune to Chrome :visited restrictions */
+.nav-tab-link {
+  display: inline-block;
+  position: relative;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+  /* Kill ALL browser default link styling */
+  text-decoration: none !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Kill :visited browser override — these rules DO nothing to color
+   but prevent the browser from applying its own :visited styles */
 .nav-tab-link:link,
 .nav-tab-link:visited,
 .nav-tab-link:hover,
 .nav-tab-link:active,
 .nav-tab-link:focus {
   text-decoration: none !important;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Bottom indicator via ::after — NOT a border on <a>, so :visited can't touch it */
+.nav-tab-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+/* Active state — NavLink adds 'active' class automatically */
+.nav-tab-link.active {
+  color: #3b82f6 !important;
+  font-weight: 700;
+}
+
+.nav-tab-link.active::after {
+  background: #3b82f6 !important;
 }
 

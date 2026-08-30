@@ -282,10 +282,6 @@ export default function Header() {
               to={tab.path}
               end={tab.path === '/'}
               className="nav-tab-link"
-              style={({ isActive }) => ({
-                ...styles.tabItem,
-                ...(isActive ? styles.activeTabItem : {}),
-              })}
             >
               {tab.name}
             </NavLink>
@@ -540,22 +536,5 @@ const styles = {
   tabsList: {
     display: 'flex',
     gap: '4px',
-  },
-  tabItem: {
-    padding: '10px 14px',
-    fontSize: '0.85rem',
-    fontWeight: '600',
-    color: '#94a3b8',
-    textDecoration: 'none',
-    border: 'none',
-    boxShadow: 'none',
-    transition: 'all 0.15s ease',
-    whiteSpace: 'nowrap',
-    display: 'inline-block',
-  },
-  activeTabItem: {
-    color: '#3b82f6',
-    fontWeight: '700',
-    boxShadow: 'inset 0 -2px 0 #3b82f6',
   },
 };
