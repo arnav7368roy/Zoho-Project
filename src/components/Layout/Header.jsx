@@ -281,6 +281,7 @@ export default function Header() {
               key={tab.path}
               to={tab.path}
               end={tab.path === '/'}
+              className="nav-tab-link"
               style={({ isActive }) => ({
                 ...styles.tabItem,
                 ...(isActive ? styles.activeTabItem : {}),
