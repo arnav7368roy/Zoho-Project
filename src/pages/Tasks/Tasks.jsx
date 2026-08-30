@@ -30,8 +30,10 @@ import {
   Image as ImageIcon,
   Maximize2,
   Paperclip,
+  Columns,
 } from 'lucide-react';
 import FilterPanel from '../../components/FilterPanel';
+import ManualLogHoursModal from '../../components/ManualLogHoursModal';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Tasks() {
@@ -40,12 +42,33 @@ export default function Tasks() {
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('list'); // 'list' or 'kanban'
+  const [viewMode, setViewMode] = useState('list'); // 'list', 'kanban', or 'detail'
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [showDrawer, setShowDrawer] = useState(false);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [activeTab, setActiveTab] = useState('Comments');
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [taskLogs, setTaskLogs] = useState([
+    {
+      id: 'log-1',
+      date: '2026-08-29',
+      userName: 'Arnav Roy',
+      hours: '2.5',
+      description: 'Refactored backend task status controller and optimized SQL queries.',
+      billable: true,
+    },
+    {
+      id: 'log-2',
+      date: '2026-08-30',
+      userName: 'Laddu Kumar',
+      hours: '4.0',
+      description: 'Implemented UI Glassmorphism dark mode theme and responsive drawer.',
+      billable: true,
+    },
+  ]);
 
   // Live Timer State (Seconds count up for active tasks)
   const [activeTimerSeconds, setActiveTimerSeconds] = useState(0);
@@ -98,6 +121,30 @@ export default function Tasks() {
     setTaskStatus(task.status || 'TO_DO');
     setFormError('');
     setShowEditDrawer(true);
+  };
+
+  const statusOptions = [
+    { value: 'TO_DO', label: 'Open', color: '#3b82f6' },
+    { value: 'IN_PROGRESS', label: 'In Progress', color: '#eab308' },
+    { value: 'DEV_COMPLETE', label: 'Dev Complete', color: '#a855f7' },
+    { value: 'IN_REVIEW', label: 'In Review', color: '#06b6d4' },
+    { value: 'COMPLETED', label: 'Completed', color: '#22c55e' },
+    { value: 'CANCELLED', label: 'Cancelled', color: '#ef4444' },
+  ];
+
+  const handleUpdateTaskStatusDirect = async (newStatus) => {
+    if (!selectedTask) return;
+    setShowStatusDropdown(false);
+    setSelectedTask({ ...selectedTask, status: newStatus });
+    setTasks((prev) =>
+      prev.map((t) => (t.id === selectedTask.id ? { ...t, status: newStatus } : t))
+    );
+
+    try {
+      await apiRequest(`/api/v1/tasks/${selectedTask.id}`, 'PUT', { status: newStatus });
+    } catch (err) {
+      console.error('Error updating task status:', err);
+    }
   };
 
   const handleUpdateTask = async (e) => {
@@ -726,100 +773,381 @@ export default function Tasks() {
                   ))}
                 </div>
               </div>
-            );
-          })}
+                 })}
         </div>
-      )}
-
-      {/* TASK DETAIL DRAWER / POPUP */}
-      {selectedTask && (
-        <div style={styles.drawerOverlay} onClick={() => setSelectedTask(null)}>
-          <div style={styles.drawerContainer} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.drawerHeader}>
-              <div>
-                <span style={{ fontSize: '0.8rem', fontWeight: '800', color: '#2563eb' }}>
-                  {selectedTask.taskCode}
-                </span>
-                <h3 style={{ margin: '4px 0 0 0', fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
-                  {selectedTask.title}
-                </h3>
-              </div>
-              <button onClick={() => setSelectedTask(null)} style={styles.closeIconBtn}>
-                <X size={18} />
-              </button>
+      ) : (
+        /* DETAIL SPLIT VIEW (Matching Zoho Projects Issue & Task Detail View) */
+        <div style={styles.mainLayout}>
+          {/* Left Tasks Directory List */}
+          <div style={styles.leftList}>
+            <div style={styles.listHeader}>
+              <Search size={14} color="#94a3b8" />
+              <input
+                type="text"
+                placeholder="Search tasks..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={styles.listSearchInput}
+              />
             </div>
 
-            <div style={styles.drawerBody}>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={styles.drawerLabel}>Status</label>
-                <select
-                  value={selectedTask.status}
-                  onChange={(e) => handleQuickStatusChange(selectedTask.id, e.target.value)}
-                  style={styles.drawerInput}
-                >
-                  <option value="TO_DO">Open</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="DEV_COMPLETE">Dev Complete</option>
-                  <option value="READY_FOR_QA">Ready for QA</option>
-                </select>
+            <div style={styles.issueItemsContainer}>
+              {filteredTasks.map((t, idx) => {
+                const isSelected = selectedTask?.id === t.id;
+                const badge = getStatusBadge(t.status);
+                const taskCode = t.taskCode || `TASK${(idx + 1).toString().padStart(4, '0')}`;
+
+                return (
+                  <div
+                    key={t.id || taskCode}
+                    onClick={() => setSelectedTask(t)}
+                    style={{
+                      ...styles.issueCardItem,
+                      ...(isSelected ? styles.selectedIssueCardItem : {}),
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#60a5fa' }}>
+                        {taskCode}
+                      </span>
+                      <span
+                        style={{
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          fontSize: '0.68rem',
+                          fontWeight: '700',
+                          backgroundColor: `${badge.bg}`,
+                          color: badge.color,
+                        }}
+                      >
+                        {badge.label}
+                      </span>
+                    </div>
+
+                    <div style={styles.issueCardTitle}>{t.title}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '4px' }}>
+                      👤 {t.assignedToName || 'Unassigned'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Task Detail Pane */}
+          {selectedTask ? (
+            <div style={styles.rightDetailPane}>
+              {/* Header Box */}
+              <div style={styles.detailHeaderBox}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: '800', color: '#64748b' }}>
+                      {selectedTask.taskCode || 'TASK0005'}
+                    </span>
+                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                      By {selectedTask.assignedToName || 'System Admin'}
+                    </span>
+                    <span style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: '600' }}>
+                      📁 {selectedTask.projectName || 'Zoho Enterprise System'}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => openEditTask(selectedTask)}
+                    style={{
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '6px 14px',
+                      borderRadius: '6px',
+                      fontSize: '0.82rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <Edit size={14} /> Edit Task
+                  </button>
+                </div>
+
+                <h1 style={styles.detailTitle}>{selectedTask.title}</h1>
+
+                {/* Status Dropdown Selector Popup */}
+                <div style={{ position: 'relative', marginTop: '16px', width: 'fit-content' }}>
+                  <button
+                    onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                    style={{
+                      ...styles.statusDropdownBtn,
+                      borderColor: getStatusBadge(selectedTask.status).color,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: getStatusBadge(selectedTask.status).color,
+                      }}
+                    ></span>
+                    <span>{getStatusBadge(selectedTask.status).label}</span>
+                    <ChevronDown size={14} color="#64748b" />
+                  </button>
+
+                  {showStatusDropdown && (
+                    <div style={styles.statusMenuPopup}>
+                      {statusOptions.map((opt) => (
+                        <div
+                          key={opt.value}
+                          onClick={() => handleUpdateTaskStatusDirect(opt.value)}
+                          style={styles.statusOptionRow}
+                        >
+                          <span
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              backgroundColor: opt.color,
+                            }}
+                          ></span>
+                          <span style={{ fontSize: '0.85rem', color: '#ffffff', fontWeight: '500' }}>
+                            {opt.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div style={{ marginBottom: '20px' }}>
-                <label style={styles.drawerLabel}>Description</label>
-                <p style={{ fontSize: '0.88rem', color: '#475569', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '6px', margin: 0 }}>
-                  {selectedTask.description || 'No description provided.'}
+              {/* Description Section */}
+              <div style={styles.descriptionSection}>
+                <h4 style={styles.sectionHeading}>Description / Details:</h4>
+                <p style={styles.descText}>
+                  {selectedTask.description || 'No detailed description provided for this task.'}
                 </p>
               </div>
 
-              <div style={styles.sectionHeader}>
-                <span>▾ Task Details</span>
+              {/* Task Information Grid */}
+              <div style={styles.infoGridContainer}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: '#f8fafc', marginBottom: '16px' }}>
+                  ▾ Task Information
+                </h3>
+
+                <div style={styles.gridTwoCols}>
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoLabel}>Owner / Assignee</span>
+                    <span style={styles.infoVal}>
+                      👤 {selectedTask.assignedToName || 'Unassigned'}
+                    </span>
+                  </div>
+
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoLabel}>Priority</span>
+                    <span style={{ ...styles.infoVal, color: selectedTask.priority === 'HIGH' ? '#ef4444' : '#eab308', fontWeight: '700' }}>
+                      {selectedTask.priority || 'MEDIUM'}
+                    </span>
+                  </div>
+
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoLabel}>Planned Effort</span>
+                    <span style={styles.infoVal}>{selectedTask.plannedEffort ? `${selectedTask.plannedEffort} hrs` : '8.00 hrs'}</span>
+                  </div>
+
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoLabel}>Due Date</span>
+                    <span style={styles.infoVal}>{selectedTask.dueDate || 'None'}</span>
+                  </div>
+
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoLabel}>Start Date</span>
+                    <span style={styles.infoVal}>{selectedTask.startDate || '-'}</span>
+                  </div>
+
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoLabel}>Task List</span>
+                    <span style={styles.infoVal}>{selectedTask.taskList || 'General TaskList'}</span>
+                  </div>
+
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoLabel}>Tags</span>
+                    <span style={styles.infoVal}>{selectedTask.tags || 'Zoho Upgrade'}</span>
+                  </div>
+
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoLabel}>Status</span>
+                    <span style={{ ...styles.infoVal, color: getStatusBadge(selectedTask.status).color, fontWeight: '700' }}>
+                      ● {getStatusBadge(selectedTask.status).label}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div style={styles.gridTwoCols}>
-                <div style={{ padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.82rem' }}>Owner:</span>
-                  <span style={{ fontWeight: '700', color: '#0f172a', marginLeft: '8px', fontSize: '0.85rem' }}>
-                    {selectedTask.assignedToName || 'Unassigned'}
-                  </span>
-                </div>
-                <div style={{ padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.82rem' }}>Priority:</span>
-                  <span style={{ fontWeight: '700', color: '#eab308', marginLeft: '8px', fontSize: '0.85rem' }}>
-                    {selectedTask.priority || 'MEDIUM'}
-                  </span>
-                </div>
-                <div style={{ padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.82rem' }}>Timer Status:</span>
-                  <span style={{ fontWeight: '700', color: '#2563eb', marginLeft: '8px', fontSize: '0.85rem' }}>
-                    {selectedTask.timerStatus || 'STOPPED'}
-                  </span>
-                </div>
-                <div style={{ padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.82rem' }}>Due Date:</span>
-                  <span style={{ fontWeight: '700', color: '#0f172a', marginLeft: '8px', fontSize: '0.85rem' }}>
-                    {selectedTask.dueDate || 'None'}
-                  </span>
-                </div>
+              {/* Bottom Tabs Section */}
+              <div style={styles.bottomTabsBar}>
+                {[
+                  'Comments',
+                  'Attachments',
+                  'Log Hours',
+                  'Time Logs',
+                  'Subtasks',
+                  'Activity Stream',
+                ].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    style={{
+                      ...styles.tabItem,
+                      ...(activeTab === tab ? styles.activeTabItem : {}),
+                    }}
+                  >
+                    {tab}
+                  </button>
+                ))}
               </div>
-            </div>
 
-            <div style={styles.drawerFooter}>
-              <button
-                onClick={() => {
-                  const taskToEdit = selectedTask;
-                  setSelectedTask(null);
-                  openEditTask(taskToEdit);
-                }}
-                style={{ ...styles.drawerBlueBtn, backgroundColor: '#2563eb', marginRight: '10px' }}
-              >
-                Edit Task
-              </button>
-              <button onClick={() => setSelectedTask(null)} style={styles.drawerBlueBtn}>
-                Close
-              </button>
+              {/* TAB CONTENT PANELS */}
+              {activeTab === 'Log Hours' ? (
+                <div style={{ padding: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', backgroundColor: '#090d16' }}>
+                  {/* Top action bar */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700', color: '#f8fafc' }}>
+                        Logged Work Hours for {selectedTask.taskCode || 'TASK0005'}
+                      </h4>
+                      <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                        Total Effort: {selectedTask.plannedEffort || '6.5'} hours
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => setShowLogModal(true)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        backgroundColor: '#2563eb',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        fontSize: '0.82rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Plus size={14} /> + Add Log Time
+                    </button>
+                  </div>
+
+                  {/* Logged items list */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {taskLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        style={{
+                          backgroundColor: '#0f172a',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: '8px',
+                          padding: '12px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <Clock size={16} color="#3b82f6" />
+                          <div>
+                            <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f8fafc' }}>
+                              {log.description}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                              Logged by <strong>{log.userName}</strong> on {log.date}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {log.billable && (
+                            <span
+                              style={{
+                                backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                                color: '#4ade80',
+                                fontSize: '0.7rem',
+                                fontWeight: '700',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                              }}
+                            >
+                              Billable
+                            </span>
+                          )}
+                          <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#60a5fa' }}>
+                            {log.hours} hrs
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Comment Input Box (Default) */
+                <div style={styles.commentEditorBox}>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <div style={styles.userAvatarSmall}>A</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={styles.wysiwygBox}>
+                        <div style={styles.toolbarRow}>
+                          <Bold size={13} style={styles.toolIcon} />
+                          <Italic size={13} style={styles.toolIcon} />
+                          <Underline size={13} style={styles.toolIcon} />
+                          <Strikethrough size={13} style={styles.toolIcon} />
+                          <span style={styles.toolDivider}>|</span>
+                          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Puvi ▾</span>
+                          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>13 ▾</span>
+                          <span style={styles.toolDivider}>|</span>
+                          <ListIcon size={13} style={styles.toolIcon} />
+                          <ListOrdered size={13} style={styles.toolIcon} />
+                          <Code size={13} style={styles.toolIcon} />
+                          <ImageIcon size={13} style={styles.toolIcon} />
+                        </div>
+                        <textarea
+                          rows={2}
+                          placeholder="To add Task Comment via email..."
+                          style={styles.wysiwygTextarea}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          ) : (
+            <div style={{ flex: 1, padding: '40px', color: '#94a3b8', textAlign: 'center' }}>
+              Select a task from the left list to view complete details.
+            </div>
+          )}
         </div>
+      )}
+
+      {/* Manual Time Logging Modal for Tasks */}
+      <ManualLogHoursModal
+        isOpen={showLogModal}
+        onClose={() => setShowLogModal(false)}
+        prefilledItem={selectedTask}
+        users={users}
+        onLogSaved={(newLog) => {
+          setTaskLogs((prev) => [newLog, ...prev]);
+        }}
+      />>
       )}
 
       {/* EDIT TASK DRAWER */}
@@ -1707,5 +2035,192 @@ const styles = {
     borderRadius: '8px',
     padding: '24px',
     boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+  },
+
+  /* Split Detail View Layout (Matching Issues Module) */
+  mainLayout: {
+    display: 'flex',
+    gap: '20px',
+    minHeight: 'calc(100vh - 180px)',
+  },
+  leftList: {
+    width: '320px',
+    backgroundColor: '#0b0f19',
+    borderRadius: '8px',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+  listHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '12px 14px',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#090d16',
+  },
+  listSearchInput: {
+    background: 'none',
+    border: 'none',
+    color: '#ffffff',
+    fontSize: '0.85rem',
+    outline: 'none',
+    width: '100%',
+  },
+  issueItemsContainer: {
+    flex: 1,
+    overflowY: 'auto',
+  },
+  issueCardItem: {
+    padding: '12px 14px',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+    cursor: 'pointer',
+  },
+  selectedIssueCardItem: {
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    borderLeft: '3px solid #3b82f6',
+  },
+  issueCardTitle: {
+    fontSize: '0.82rem',
+    fontWeight: '600',
+    color: '#f8fafc',
+    marginTop: '4px',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
+  },
+  rightDetailPane: {
+    flex: 1,
+    backgroundColor: '#0b0f19',
+    borderRadius: '8px',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    color: '#f8fafc',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+  },
+  detailHeaderBox: {
+    padding: '24px',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#090d16',
+  },
+  detailTitle: {
+    fontSize: '1.25rem',
+    fontWeight: '800',
+    color: '#f8fafc',
+    lineHeight: '1.4',
+    margin: 0,
+  },
+  statusDropdownBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    backgroundColor: '#1e293b',
+    border: '1px solid #334155',
+    color: '#f8fafc',
+    borderRadius: '20px',
+    padding: '6px 16px',
+    fontSize: '0.85rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+  },
+  statusMenuPopup: {
+    position: 'absolute',
+    top: '40px',
+    left: 0,
+    width: '220px',
+    backgroundColor: '#0f172a',
+    borderRadius: '8px',
+    boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+    border: '1px solid #334155',
+    zIndex: 100,
+    padding: '8px 0',
+  },
+  statusOptionRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '8px 16px',
+    cursor: 'pointer',
+    transition: 'background 0.15s ease',
+  },
+  descriptionSection: {
+    padding: '24px',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#0b0f19',
+  },
+  sectionHeading: {
+    fontSize: '0.85rem',
+    fontWeight: '800',
+    color: '#94a3b8',
+    marginTop: 0,
+    marginBottom: '8px',
+  },
+  descText: {
+    fontSize: '0.88rem',
+    color: '#cbd5e1',
+    margin: 0,
+    lineHeight: '1.5',
+  },
+  infoGridContainer: {
+    padding: '24px',
+    backgroundColor: '#090d16',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+  },
+  infoRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '8px 0',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+    fontSize: '0.85rem',
+  },
+  infoLabel: {
+    color: '#94a3b8',
+    fontWeight: '600',
+  },
+  infoVal: {
+    color: '#f8fafc',
+    fontWeight: '600',
+  },
+  bottomTabsBar: {
+    display: 'flex',
+    gap: '16px',
+    padding: '12px 24px 0 24px',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#0b0f19',
+  },
+  tabItem: {
+    background: 'none',
+    border: 'none',
+    color: '#94a3b8',
+    fontSize: '0.82rem',
+    fontWeight: '600',
+    paddingBottom: '10px',
+    cursor: 'pointer',
+    borderBottom: '2px solid transparent',
+  },
+  activeTabItem: {
+    color: '#60a5fa',
+    fontWeight: '700',
+    borderBottom: '2px solid #3b82f6',
+  },
+  commentEditorBox: {
+    padding: '16px 24px',
+    backgroundColor: '#0b0f19',
+  },
+  userAvatarSmall: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    backgroundColor: '#06b6d4',
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: '0.75rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 };
