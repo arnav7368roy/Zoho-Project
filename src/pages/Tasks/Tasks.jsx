@@ -316,13 +316,66 @@ export default function Tasks() {
     }
   };
 
+  const [appliedFilters, setAppliedFilters] = useState({});
+  const [filterLogic, setFilterLogic] = useState('all');
+
   const filteredTasks = tasks.filter((t) => {
     const matchesSearch =
       t.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.taskCode?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || t.status === statusFilter;
-    return matchesSearch && matchesStatus;
+
+    if (!matchesSearch || !matchesStatus) return false;
+
+    const filterEntries = Object.entries(appliedFilters);
+    if (filterEntries.length === 0) return true;
+
+    const matchesFilterEntry = ([cat, selectedVals]) => {
+      if (!selectedVals || selectedVals.length === 0) return true;
+
+      if (cat === 'Status') {
+        const statusMap = {
+          'Open': 'TO_DO',
+          'In Progress': 'IN_PROGRESS',
+          'Dev Complete': 'DEV_COMPLETE',
+          'Ready for QA': 'READY_FOR_QA',
+          'Closed': 'COMPLETED',
+        };
+        const mappedVals = selectedVals.map((v) => statusMap[v] || v);
+        return mappedVals.includes(t.status);
+      }
+      if (cat === 'Priority') {
+        return selectedVals.includes(t.priority);
+      }
+      if (cat === 'Owner' || cat === 'Assignee' || cat === 'Owner / Assignee') {
+        return selectedVals.some((name) =>
+          t.assignedToName?.toLowerCase().includes(name.toLowerCase())
+        );
+      }
+      if (cat === 'Project') {
+        return selectedVals.some((pName) =>
+          t.projectName?.toLowerCase().includes(pName.toLowerCase())
+        );
+      }
+      if (cat === 'Task / Issue Name' || cat === 'Task Name') {
+        const query = selectedVals[0]?.toLowerCase() || '';
+        return t.title?.toLowerCase().includes(query) || t.taskCode?.toLowerCase().includes(query);
+      }
+      if (cat === 'Tags') {
+        const query = selectedVals[0]?.toLowerCase() || '';
+        return t.tags?.toLowerCase().includes(query);
+      }
+      return true;
+    };
+
+    if (filterLogic === 'any') {
+      return filterEntries.some(matchesFilterEntry);
+    } else {
+      return filterEntries.every(matchesFilterEntry);
+    }
   });
+
+  const totalActiveFilters = Object.keys(appliedFilters).length;
 
   return (
     <div>
@@ -355,10 +408,13 @@ export default function Tasks() {
         <div style={styles.toolbarRight}>
           <button
             onClick={() => setShowFilterPanel(true)}
-            style={styles.filterBtn}
+            style={{
+              ...styles.filterBtn,
+              ...(totalActiveFilters > 0 ? { borderColor: '#3b82f6', color: '#60a5fa', backgroundColor: 'rgba(59, 130, 246, 0.1)' } : {}),
+            }}
             title="Open Filter Drawer"
           >
-            <Filter size={14} /> <span>Filter</span>
+            <Filter size={14} /> <span>Filter {totalActiveFilters > 0 && `(${totalActiveFilters})`}</span>
           </button>
 
           {/* View Toggle */}
@@ -389,10 +445,75 @@ export default function Tasks() {
         </div>
       </div>
 
+      {/* Active Filter Bar (Zoho Projects Style) */}
+      {totalActiveFilters > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px 24px',
+          backgroundColor: '#090d16',
+          borderBottom: '1px solid #1e293b',
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600' }}>Active Filters:</span>
+          {Object.entries(appliedFilters).map(([cat, vals]) => (
+            <span
+              key={cat}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 10px',
+                backgroundColor: '#1e293b',
+                color: '#60a5fa',
+                borderRadius: '16px',
+                fontSize: '0.78rem',
+                border: '1px solid #334155',
+              }}
+            >
+              <strong>{cat}:</strong> {vals.join(', ')}
+              <X
+                size={12}
+                style={{ cursor: 'pointer', marginLeft: '4px' }}
+                onClick={() => {
+                  setAppliedFilters((prev) => {
+                    const copy = { ...prev };
+                    delete copy[cat];
+                    return copy;
+                  });
+                }}
+              />
+            </span>
+          ))}
+          <button
+            onClick={() => setAppliedFilters({})}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#ef4444',
+              fontSize: '0.78rem',
+              cursor: 'pointer',
+              fontWeight: '600',
+              marginLeft: 'auto',
+            }}
+          >
+            Clear All Filters
+          </button>
+        </div>
+      )}
+
       <FilterPanel
         isOpen={showFilterPanel}
         onClose={() => setShowFilterPanel(false)}
-        onApplyFilter={(cat) => console.log('Task Filter applied:', cat)}
+        users={users}
+        projects={projects}
+        initialFilters={appliedFilters}
+        initialLogic={filterLogic}
+        onApplyFilter={({ filters, logic }) => {
+          setAppliedFilters(filters);
+          setFilterLogic(logic);
+        }}
       />
 
       {loading ? (

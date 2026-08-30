@@ -245,12 +245,70 @@ export default function Issues() {
   const currentStatusObj =
     statusOptions.find((s) => s.value === selectedIssue?.status) || statusOptions[0];
 
-  // Compute filtered issues based on statusFilter
-  const filteredIssues = statusFilter === 'ALL'
-    ? issues
-    : statusFilter === 'IN_PROGRESS'
-      ? issues.filter(i => i.status === 'IN_PROGRESS')
-      : issues.filter(i => i.status === statusFilter);
+  const [appliedFilters, setAppliedFilters] = useState({});
+  const [filterLogic, setFilterLogic] = useState('all');
+
+  // Compute filtered issues based on statusFilter and appliedFilters
+  const filteredIssues = issues.filter((iss) => {
+    const matchesStatus = statusFilter === 'ALL' || iss.status === statusFilter;
+    if (!matchesStatus) return false;
+
+    const filterEntries = Object.entries(appliedFilters);
+    if (filterEntries.length === 0) return true;
+
+    const matchesFilterEntry = ([cat, selectedVals]) => {
+      if (!selectedVals || selectedVals.length === 0) return true;
+
+      if (cat === 'Status') {
+        const statusMap = {
+          'Open': 'OPEN',
+          'In Progress': 'IN_PROGRESS',
+          'Dev Complete': 'DEV_COMPLETE',
+          'PR Merged': 'PR_MERGED',
+          'To be tested': 'TO_BE_TESTED',
+          'Closed': 'CLOSED',
+          'Blocked': 'BLOCKED',
+          'On Hold': 'ON_HOLD',
+        };
+        const mappedVals = selectedVals.map((v) => statusMap[v] || v);
+        return mappedVals.includes(iss.status);
+      }
+      if (cat === 'Severity') {
+        return selectedVals.some((sev) => iss.severity?.toLowerCase() === sev.toLowerCase());
+      }
+      if (cat === 'Ticket Type') {
+        return selectedVals.some((tt) => iss.ticketType?.toLowerCase() === tt.toLowerCase());
+      }
+      if (cat === 'Assignee' || cat === 'Reporter' || cat === 'Owner / Assignee') {
+        return selectedVals.some((name) =>
+          iss.assigneeName?.toLowerCase().includes(name.toLowerCase()) ||
+          iss.reporterName?.toLowerCase().includes(name.toLowerCase())
+        );
+      }
+      if (cat === 'Project') {
+        return selectedVals.some((pName) =>
+          iss.projectName?.toLowerCase().includes(pName.toLowerCase())
+        );
+      }
+      if (cat === 'Issue Name' || cat === 'Task / Issue Name') {
+        const query = selectedVals[0]?.toLowerCase() || '';
+        return iss.title?.toLowerCase().includes(query) || iss.issueCode?.toLowerCase().includes(query);
+      }
+      if (cat === 'Tags') {
+        const query = selectedVals[0]?.toLowerCase() || '';
+        return iss.projectName?.toLowerCase().includes(query);
+      }
+      return true;
+    };
+
+    if (filterLogic === 'any') {
+      return filterEntries.some(matchesFilterEntry);
+    } else {
+      return filterEntries.every(matchesFilterEntry);
+    }
+  });
+
+  const totalActiveFilters = Object.keys(appliedFilters).length;
 
   return (
     <div style={styles.container}>
@@ -304,20 +362,88 @@ export default function Issues() {
           {/* Filter Funnel Icon Button (Matching Image 2 & 3) */}
           <button
             onClick={() => setShowFilterPanel(true)}
-            style={styles.filterBtn}
+            style={{
+              ...styles.filterBtn,
+              ...(totalActiveFilters > 0 ? { borderColor: '#3b82f6', color: '#60a5fa', backgroundColor: 'rgba(59, 130, 246, 0.1)' } : {}),
+            }}
             title="Open Filter Drawer"
           >
-            <Filter size={15} color="#2563eb" />
+            <Filter size={15} color="#2563eb" /> {totalActiveFilters > 0 && <span style={{ fontSize: '0.75rem', fontWeight: '800' }}>({totalActiveFilters})</span>}
           </button>
         </div>
       </div>
+
+      {/* Active Filter Bar (Zoho Projects Style) */}
+      {totalActiveFilters > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px 24px',
+          backgroundColor: '#090d16',
+          borderBottom: '1px solid #1e293b',
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600' }}>Active Filters:</span>
+          {Object.entries(appliedFilters).map(([cat, vals]) => (
+            <span
+              key={cat}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 10px',
+                backgroundColor: '#1e293b',
+                color: '#60a5fa',
+                borderRadius: '16px',
+                fontSize: '0.78rem',
+                border: '1px solid #334155',
+              }}
+            >
+              <strong>{cat}:</strong> {vals.join(', ')}
+              <X
+                size={12}
+                style={{ cursor: 'pointer', marginLeft: '4px' }}
+                onClick={() => {
+                  setAppliedFilters((prev) => {
+                    const copy = { ...prev };
+                    delete copy[cat];
+                    return copy;
+                  });
+                }}
+              />
+            </span>
+          ))}
+          <button
+            onClick={() => setAppliedFilters({})}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#ef4444',
+              fontSize: '0.78rem',
+              cursor: 'pointer',
+              fontWeight: '600',
+              marginLeft: 'auto',
+            }}
+          >
+            Clear All Filters
+          </button>
+        </div>
+      )}
 
       {/* Filter Panel Drawer */}
       <FilterPanel
         isOpen={showFilterPanel}
         onClose={() => setShowFilterPanel(false)}
         customCategories={issueCategories}
-        onApplyFilter={(cat) => setActiveCategoryFilter(cat)}
+        users={users}
+        projects={projects}
+        initialFilters={appliedFilters}
+        initialLogic={filterLogic}
+        onApplyFilter={({ filters, logic }) => {
+          setAppliedFilters(filters);
+          setFilterLogic(logic);
+        }}
       />
 
       {loading ? (
