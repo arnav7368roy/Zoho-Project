@@ -474,13 +474,14 @@ const modalOverlay = {
 };
 
 const modalBox = {
-  background: '#1e293b',
-  border: '1px solid rgba(255,255,255,0.1)',
+  background: 'var(--bg-card)',
+  border: '1px solid var(--border-color)',
   borderRadius: '16px',
   width: '100%',
   maxWidth: '440px',
-  boxShadow: '0 25px 50px rgba(0,0,0,0.6)',
+  boxShadow: 'var(--shadow-lg)',
   overflow: 'hidden',
+  color: 'var(--text-main)',
 };
 
 const modalHeader = {
@@ -488,8 +489,8 @@ const modalHeader = {
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '18px 24px',
-  borderBottom: '1px solid rgba(255,255,255,0.08)',
-  background: '#0f172a',
+  borderBottom: '1px solid var(--border-color)',
+  background: 'var(--bg-header)',
 };
 
 const formLabel = {
@@ -497,16 +498,16 @@ const formLabel = {
   marginBottom: '6px',
   fontSize: '0.82rem',
   fontWeight: '600',
-  color: '#94a3b8',
+  color: 'var(--text-muted)',
 };
 
 const formInput = {
   width: '100%',
   padding: '10px 14px',
-  background: '#0f172a',
-  border: '1px solid #334155',
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border-color)',
   borderRadius: '8px',
-  color: '#f8fafc',
+  color: 'var(--text-main)',
   fontSize: '0.9rem',
   outline: 'none',
   boxSizing: 'border-box',
@@ -527,9 +528,9 @@ const submitBtnStyle = {
 const cancelBtnStyle = {
   flex: 1,
   padding: '10px 18px',
-  background: 'rgba(255,255,255,0.06)',
-  color: '#94a3b8',
-  border: '1px solid rgba(255,255,255,0.1)',
+  background: 'var(--bg-input)',
+  color: 'var(--text-muted)',
+  border: '1px solid var(--border-color)',
   borderRadius: '8px',
   fontSize: '0.9rem',
   fontWeight: '600',

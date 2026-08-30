@@ -143,7 +143,7 @@ export default function WorkingHoursChart({ logs = [], tasks = [], issues = [], 
       <div style={styles.toolbar}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={styles.headerIconBox}>
-            <BarChart2 size={18} color="#3b82f6" />
+            <BarChart2 size={18} color="var(--primary)" />
           </div>
           <div>
             <h2 style={styles.title}>Employee Working Hours Analytics</h2>
@@ -173,7 +173,7 @@ export default function WorkingHoursChart({ logs = [], tasks = [], issues = [], 
 
           {/* User Filter Dropdown */}
           <div style={styles.selectWrapper}>
-            <User size={14} color="#94a3b8" />
+            <User size={14} color="var(--text-muted)" />
             <select
               value={selectedUserFilter}
               onChange={(e) => setSelectedUserFilter(e.target.value)}
@@ -215,7 +215,7 @@ export default function WorkingHoursChart({ logs = [], tasks = [], issues = [], 
         <div style={styles.metricCard}>
           <div style={styles.metricHeader}>
             <span style={styles.metricLabel}>Total Logged Hours</span>
-            <Clock size={16} color="#3b82f6" />
+            <Clock size={16} color="var(--primary)" />
           </div>
           <div style={styles.metricValue}>{totalHoursLogged} <span style={styles.unitText}>hrs</span></div>
           <div style={styles.metricSubtext}>Across last {timeframeDays} days</div>
@@ -244,7 +244,7 @@ export default function WorkingHoursChart({ logs = [], tasks = [], issues = [], 
             <span style={styles.metricLabel}>Top Time Investment</span>
             <CheckCircle size={16} color="#eab308" />
           </div>
-          <div style={{ ...styles.metricValue, fontSize: '1.05rem', color: '#60a5fa' }}>
+          <div style={{ ...styles.metricValue, fontSize: '1.05rem', color: 'var(--primary)' }}>
             {topTicket.code}
           </div>
           <div style={styles.metricSubtext}>{topTicket.hours.toFixed(1)} hrs logged</div>
@@ -259,7 +259,7 @@ export default function WorkingHoursChart({ logs = [], tasks = [], issues = [], 
             <h3 style={styles.chartTitle}>
               Daily Hours Breakdown ({timeframeDays} Days Timeline)
             </h3>
-            <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
               Hover over bars to view detailed ticket hours logged
             </span>
           </div>
@@ -274,16 +274,16 @@ export default function WorkingHoursChart({ logs = [], tasks = [], issues = [], 
                 <div key={d.dateStr} style={styles.barCol} className="group">
                   {/* Tooltip on Hover */}
                   <div style={styles.tooltip}>
-                    <div style={{ fontWeight: '700', color: '#60a5fa', marginBottom: '4px' }}>
+                    <div style={{ fontWeight: '700', color: 'var(--primary)', marginBottom: '4px' }}>
                       {d.monthDay} ({d.dayName})
                     </div>
-                    <div style={{ fontWeight: '800', fontSize: '0.9rem', color: '#ffffff' }}>
+                    <div style={{ fontWeight: '800', fontSize: '0.9rem', color: 'var(--text-main)' }}>
                       {hrs.toFixed(1)} Hours Logged
                     </div>
                     {dayData.items.length > 0 && (
-                      <div style={{ marginTop: '6px', borderTop: '1px solid #334155', paddingTop: '4px' }}>
+                      <div style={{ marginTop: '6px', borderTop: '1px solid var(--border-color)', paddingTop: '4px' }}>
                         {dayData.items.slice(0, 3).map((it, idx) => (
-                          <div key={idx} style={{ fontSize: '0.7rem', color: '#cbd5e1' }}>
+                          <div key={idx} style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                             • <strong>{it.code}:</strong> {it.hours.toFixed(1)}h
                           </div>
                         ))}
@@ -303,10 +303,10 @@ export default function WorkingHoursChart({ logs = [], tasks = [], issues = [], 
                         ...styles.barFill,
                         height: `${heightPercent}%`,
                         backgroundColor: d.isWeekend
-                          ? 'rgba(148, 163, 184, 0.3)'
+                          ? 'var(--border-color)'
                           : hrs >= 8
                           ? '#22c55e'
-                          : '#3b82f6',
+                          : 'var(--primary)',
                       }}
                     />
                   </div>
@@ -315,7 +315,7 @@ export default function WorkingHoursChart({ logs = [], tasks = [], issues = [], 
                   <span
                     style={{
                       ...styles.barBottomLabel,
-                      color: d.isWeekend ? '#64748b' : '#cbd5e1',
+                      color: d.isWeekend ? 'var(--text-subtle)' : 'var(--text-muted)',
                     }}
                   >
                     {d.monthDay}
@@ -365,6 +365,7 @@ const styles = {
     flexDirection: 'column',
     gap: '20px',
     marginBottom: '24px',
+    color: 'var(--text-main)',
   },
   toolbar: {
     display: 'flex',
@@ -372,16 +373,17 @@ const styles = {
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: '16px',
-    backgroundColor: '#0b0f19',
+    backgroundColor: 'var(--bg-card)',
     padding: '16px 20px',
     borderRadius: '10px',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    border: '1px solid var(--border-color)',
+    color: 'var(--text-main)',
   },
   headerIconBox: {
     width: '38px',
     height: '38px',
     borderRadius: '8px',
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    backgroundColor: 'var(--primary-light)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -390,12 +392,12 @@ const styles = {
     margin: 0,
     fontSize: '1.15rem',
     fontWeight: '800',
-    color: '#ffffff',
+    color: 'var(--text-main)',
   },
   subtitle: {
     margin: '2px 0 0 0',
     fontSize: '0.8rem',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
   },
   filterControls: {
     display: 'flex',
@@ -405,14 +407,14 @@ const styles = {
   },
   btnGroup: {
     display: 'flex',
-    backgroundColor: '#1e293b',
+    backgroundColor: 'var(--bg-input)',
     borderRadius: '6px',
     padding: '3px',
-    border: '1px solid #334155',
+    border: '1px solid var(--border-color)',
   },
   timeframeBtn: {
     backgroundColor: 'transparent',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     border: 'none',
     padding: '6px 12px',
     fontSize: '0.78rem',
@@ -425,7 +427,7 @@ const styles = {
     transition: 'all 0.15s ease',
   },
   activeTimeframeBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: 'var(--primary)',
     color: '#ffffff',
     fontWeight: '700',
   },
@@ -433,15 +435,15 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    backgroundColor: '#1e293b',
-    border: '1px solid #334155',
+    backgroundColor: 'var(--bg-input)',
+    border: '1px solid var(--border-color)',
     borderRadius: '6px',
     padding: '6px 12px',
   },
   userSelect: {
     background: 'none',
     border: 'none',
-    color: '#ffffff',
+    color: 'var(--text-main)',
     fontSize: '0.8rem',
     outline: 'none',
     cursor: 'pointer',
@@ -452,10 +454,10 @@ const styles = {
     gap: '16px',
   },
   metricCard: {
-    backgroundColor: '#0b0f19',
+    backgroundColor: 'var(--bg-card)',
     padding: '16px 20px',
     borderRadius: '10px',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    border: '1px solid var(--border-color)',
   },
   metricHeader: {
     display: 'flex',
@@ -465,29 +467,29 @@ const styles = {
   },
   metricLabel: {
     fontSize: '0.78rem',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     fontWeight: '600',
   },
   metricValue: {
     fontSize: '1.4rem',
     fontWeight: '800',
-    color: '#ffffff',
+    color: 'var(--text-main)',
   },
   unitText: {
     fontSize: '0.8rem',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     fontWeight: '500',
   },
   metricSubtext: {
     fontSize: '0.72rem',
-    color: '#64748b',
+    color: 'var(--text-subtle)',
     marginTop: '4px',
   },
   chartBox: {
-    backgroundColor: '#0b0f19',
+    backgroundColor: 'var(--bg-card)',
     padding: '20px 24px',
     borderRadius: '10px',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    border: '1px solid var(--border-color)',
   },
   chartHeaderRow: {
     display: 'flex',
@@ -499,7 +501,7 @@ const styles = {
     margin: 0,
     fontSize: '1.05rem',
     fontWeight: '700',
-    color: '#f8fafc',
+    color: 'var(--text-main)',
   },
   barGraphContainer: {
     display: 'flex',
@@ -521,14 +523,14 @@ const styles = {
   barTopLabel: {
     fontSize: '0.7rem',
     fontWeight: '700',
-    color: '#60a5fa',
+    color: 'var(--primary)',
     marginBottom: '6px',
   },
   barTrack: {
     width: '100%',
     maxWidth: '24px',
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: 'var(--bg-input)',
     borderRadius: '4px 4px 0 0',
     display: 'flex',
     alignItems: 'flex-end',
@@ -548,11 +550,11 @@ const styles = {
     position: 'absolute',
     bottom: '100%',
     marginBottom: '8px',
-    backgroundColor: '#0f172a',
-    border: '1px solid #334155',
+    backgroundColor: 'var(--bg-card)',
+    border: '1px solid var(--border-color)',
     borderRadius: '6px',
     padding: '8px 12px',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+    boxShadow: 'var(--shadow-lg)',
     zIndex: 50,
     whiteSpace: 'nowrap',
     pointerEvents: 'none',
@@ -568,10 +570,10 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '6px',
-    backgroundColor: '#1e293b',
+    backgroundColor: 'var(--bg-input)',
     padding: '12px 16px',
     borderRadius: '8px',
-    border: '1px solid #334155',
+    border: '1px solid var(--border-color)',
   },
   ticketMeta: {
     display: 'flex',
@@ -579,7 +581,7 @@ const styles = {
     gap: '10px',
   },
   ticketCodePill: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: 'var(--primary)',
     color: '#ffffff',
     fontSize: '0.72rem',
     fontWeight: '800',
@@ -589,12 +591,12 @@ const styles = {
   ticketTitleText: {
     fontSize: '0.88rem',
     fontWeight: '700',
-    color: '#f8fafc',
+    color: 'var(--text-main)',
     flex: 1,
   },
   ticketUserTag: {
     fontSize: '0.75rem',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
   },
   progressContainer: {
     display: 'flex',
@@ -604,19 +606,19 @@ const styles = {
   progressTrack: {
     flex: 1,
     height: '8px',
-    backgroundColor: '#090d16',
+    backgroundColor: 'var(--border-color)',
     borderRadius: '4px',
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#3b82f6',
+    backgroundColor: 'var(--primary)',
     borderRadius: '4px',
   },
   ticketHoursValue: {
     fontSize: '0.82rem',
     fontWeight: '800',
-    color: '#60a5fa',
+    color: 'var(--primary)',
     minWidth: '60px',
     textAlign: 'right',
   },

@@ -79,7 +79,7 @@ export default function ManualLogHoursModal({
         <div style={styles.header}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={styles.iconCircle}>
-              <Clock size={18} color="#3b82f6" />
+              <Clock size={18} color="var(--primary)" />
             </div>
             <div>
               <h3 style={styles.title}>Log Work Hours Manually</h3>
@@ -91,7 +91,7 @@ export default function ManualLogHoursModal({
             </div>
           </div>
           <button style={styles.closeBtn} onClick={onClose}>
-            <X size={18} color="#94a3b8" />
+            <X size={18} color="var(--text-muted)" />
           </button>
         </div>
 
@@ -111,7 +111,7 @@ export default function ManualLogHoursModal({
           <div style={styles.formRow}>
             <div style={{ flex: 1 }}>
               <label style={styles.label}>
-                <Calendar size={13} color="#94a3b8" /> Log Date
+                <Calendar size={13} color="var(--text-muted)" /> Log Date
               </label>
               <input
                 type="date"
@@ -155,7 +155,7 @@ export default function ManualLogHoursModal({
           <div style={styles.formRow}>
             <div style={{ flex: 1 }}>
               <label style={styles.label}>
-                <User size={13} color="#94a3b8" /> Employee / Logged By
+                <User size={13} color="var(--text-muted)" /> Employee / Logged By
               </label>
               <select
                 value={selectedUser}
@@ -175,7 +175,7 @@ export default function ManualLogHoursModal({
 
             <div style={{ flex: 1 }}>
               <label style={styles.label}>
-                <DollarSign size={13} color="#94a3b8" /> Billing Status
+                <DollarSign size={13} color="var(--text-muted)" /> Billing Status
               </label>
               <select
                 value={billable ? 'true' : 'false'}
@@ -191,7 +191,7 @@ export default function ManualLogHoursModal({
           {/* Work Description */}
           <div>
             <label style={styles.label}>
-              <FileText size={13} color="#94a3b8" /> Work Description / Remarks
+              <FileText size={13} color="var(--text-muted)" /> Work Description / Remarks
             </label>
             <textarea
               placeholder="Describe what was accomplished during this logged period..."
@@ -239,11 +239,11 @@ const styles = {
   },
   modal: {
     width: '520px',
-    backgroundColor: '#0f172a',
+    backgroundColor: 'var(--bg-card)',
     borderRadius: '12px',
-    border: '1px solid #1e293b',
-    boxShadow: '0 25px 50px rgba(0,0,0,0.6)',
-    color: '#f8fafc',
+    border: '1px solid var(--border-color)',
+    boxShadow: 'var(--shadow-lg)',
+    color: 'var(--text-main)',
     overflow: 'hidden',
     animation: 'scaleUp 0.18s ease-out',
   },
@@ -252,14 +252,14 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottom: '1px solid #1e293b',
-    backgroundColor: '#090d16',
+    borderBottom: '1px solid var(--border-color)',
+    backgroundColor: 'var(--bg-header)',
   },
   iconCircle: {
     width: '36px',
     height: '36px',
     borderRadius: '50%',
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    backgroundColor: 'var(--primary-light)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -268,12 +268,12 @@ const styles = {
     margin: 0,
     fontSize: '1.05rem',
     fontWeight: '700',
-    color: '#ffffff',
+    color: 'var(--text-main)',
   },
   subtitle: {
     margin: '2px 0 0 0',
     fontSize: '0.78rem',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
   },
   closeBtn: {
     background: 'none',
@@ -292,12 +292,12 @@ const styles = {
     alignItems: 'center',
     gap: '10px',
     padding: '10px 14px',
-    backgroundColor: '#1e293b',
+    backgroundColor: 'var(--bg-input)',
     borderRadius: '8px',
-    border: '1px solid #334155',
+    border: '1px solid var(--border-color)',
   },
   itemBadge: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: 'var(--primary)',
     color: '#ffffff',
     fontSize: '0.72rem',
     fontWeight: '800',
@@ -307,7 +307,7 @@ const styles = {
   itemTitle: {
     fontSize: '0.85rem',
     fontWeight: '600',
-    color: '#f8fafc',
+    color: 'var(--text-main)',
   },
   formRow: {
     display: 'flex',
@@ -319,16 +319,16 @@ const styles = {
     gap: '6px',
     fontSize: '0.78rem',
     fontWeight: '600',
-    color: '#cbd5e1',
+    color: 'var(--text-muted)',
     marginBottom: '6px',
   },
   input: {
     width: '100%',
     padding: '9px 12px',
-    backgroundColor: '#1e293b',
-    border: '1px solid #334155',
+    backgroundColor: 'var(--bg-input)',
+    border: '1px solid var(--border-color)',
     borderRadius: '6px',
-    color: '#ffffff',
+    color: 'var(--text-main)',
     fontSize: '0.85rem',
     outline: 'none',
     boxSizing: 'border-box',
@@ -336,10 +336,10 @@ const styles = {
   select: {
     width: '100%',
     padding: '9px 12px',
-    backgroundColor: '#1e293b',
-    border: '1px solid #334155',
+    backgroundColor: 'var(--bg-input)',
+    border: '1px solid var(--border-color)',
     borderRadius: '6px',
-    color: '#ffffff',
+    color: 'var(--text-main)',
     fontSize: '0.85rem',
     outline: 'none',
     boxSizing: 'border-box',
@@ -347,10 +347,10 @@ const styles = {
   textarea: {
     width: '100%',
     padding: '10px 12px',
-    backgroundColor: '#1e293b',
-    border: '1px solid #334155',
+    backgroundColor: 'var(--bg-input)',
+    border: '1px solid var(--border-color)',
     borderRadius: '6px',
-    color: '#ffffff',
+    color: 'var(--text-main)',
     fontSize: '0.85rem',
     outline: 'none',
     boxSizing: 'border-box',
@@ -364,7 +364,7 @@ const styles = {
     backgroundColor: 'rgba(34, 197, 94, 0.15)',
     border: '1px solid rgba(34, 197, 94, 0.3)',
     borderRadius: '6px',
-    color: '#4ade80',
+    color: '#22c55e',
     fontSize: '0.82rem',
     fontWeight: '600',
   },
@@ -373,13 +373,13 @@ const styles = {
     justifyContent: 'flex-end',
     gap: '12px',
     marginTop: '8px',
-    borderTop: '1px solid #1e293b',
+    borderTop: '1px solid var(--border-color)',
     paddingTop: '16px',
   },
   cancelBtn: {
-    backgroundColor: '#1e293b',
-    color: '#94a3b8',
-    border: '1px solid #334155',
+    backgroundColor: 'var(--bg-input)',
+    color: 'var(--text-muted)',
+    border: '1px solid var(--border-color)',
     borderRadius: '6px',
     padding: '9px 18px',
     fontSize: '0.85rem',
@@ -387,7 +387,7 @@ const styles = {
     cursor: 'pointer',
   },
   submitBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: 'var(--primary)',
     color: '#ffffff',
     border: 'none',
     borderRadius: '6px',

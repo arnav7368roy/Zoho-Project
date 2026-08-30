@@ -36,16 +36,16 @@ export default function Milestones() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: '#ffffff' }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: 'var(--text-main)' }}>
             Milestones Management
           </h2>
-          <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
             Track project phases, release schedules, and target deadlines
           </span>
         </div>
         <button
           style={{
-            backgroundColor: '#2563eb',
+            backgroundColor: 'var(--primary)',
             color: '#ffffff',
             border: 'none',
             borderRadius: '6px',
@@ -67,51 +67,52 @@ export default function Milestones() {
           <div
             key={m.id}
             style={{
-              backgroundColor: '#0b0f19',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-color)',
               borderRadius: '8px',
               padding: '20px',
               display: 'flex',
               flexDirection: 'column',
               gap: '12px',
+              color: 'var(--text-main)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: '800', color: '#60a5fa' }}>{m.id}</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--primary)' }}>{m.id}</span>
               <span
                 style={{
                   padding: '2px 10px',
                   borderRadius: '12px',
                   fontSize: '0.72rem',
                   fontWeight: '700',
-                  backgroundColor: m.status === 'Active' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(148, 163, 184, 0.2)',
-                  color: m.status === 'Active' ? '#22c55e' : '#94a3b8',
+                  backgroundColor: m.status === 'Active' ? 'rgba(34, 197, 94, 0.2)' : 'var(--bg-input)',
+                  color: m.status === 'Active' ? '#22c55e' : 'var(--text-muted)',
                 }}
               >
                 {m.status}
               </span>
             </div>
 
-            <h3 style={{ fontSize: '0.98rem', fontWeight: '700', color: '#ffffff', margin: 0 }}>{m.name}</h3>
+            <h3 style={{ fontSize: '0.98rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>{m.name}</h3>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#94a3b8' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
               <Calendar size={14} />
               <span>{m.startDate} ~ {m.dueDate}</span>
             </div>
 
             {/* Progress Bar */}
             <div style={{ marginTop: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
                 <span>Completion</span>
                 <span>{m.progress}%</span>
               </div>
-              <div style={{ width: '100%', height: '6px', backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${m.progress}%`, height: '100%', backgroundColor: '#2563eb' }}></div>
+              <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ width: `${m.progress}%`, height: '100%', backgroundColor: 'var(--primary)' }}></div>
               </div>
             </div>
 
-            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
-              Owner: <strong style={{ color: '#f8fafc' }}>{m.owner}</strong>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid var(--border-color)' }}>
+              Owner: <strong style={{ color: 'var(--text-main)' }}>{m.owner}</strong>
             </div>
           </div>
         ))}

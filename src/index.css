@@ -3,10 +3,10 @@
   
   /* Modern Dark Theme (Default) */
   --bg-main: #0b0f19;
-  --bg-card: rgba(18, 26, 43, 0.75);
-  --bg-card-hover: rgba(28, 40, 65, 0.85);
-  --bg-sidebar: #0f172a;
-  --bg-header: rgba(15, 23, 42, 0.8);
+  --bg-card: #0f172a;
+  --bg-card-hover: #1e293b;
+  --bg-sidebar: #090d16;
+  --bg-header: #090d16;
   --bg-input: #1e293b;
   --border-color: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.18);
@@ -33,18 +33,22 @@
 }
 
 .light-theme {
-  --bg-main: #f8fafc;
+  --bg-main: #f1f5f9;
   --bg-card: #ffffff;
-  --bg-card-hover: #f1f5f9;
+  --bg-card-hover: #f8fafc;
   --bg-sidebar: #ffffff;
-  --bg-header: rgba(255, 255, 255, 0.85);
+  --bg-header: #ffffff;
   --bg-input: #f1f5f9;
-  --border-color: #e2e8f0;
-  --border-hover: #cbd5e1;
+  --border-color: #cbd5e1;
+  --border-hover: #94a3b8;
   
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-subtle: #94a3b8;
+  --text-main: #0f172a; /* Deep Charcoal Black for Light Mode readability */
+  --text-muted: #1e293b; /* Dark Slate Blue for subtitles and cell text */
+  --text-subtle: #475569; /* Dark Slate for headers */
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
 * {
@@ -71,6 +75,7 @@ body {
   border-radius: 16px;
   box-shadow: var(--shadow-md);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-main);
 }
 
 .glass-card:hover {
@@ -213,6 +218,12 @@ select.form-input option,
 .badge-orange { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
 .badge-red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
 
+.light-theme .badge-blue { background: rgba(37, 99, 235, 0.12); color: #1d4ed8; }
+.light-theme .badge-purple { background: rgba(124, 58, 237, 0.12); color: #6d28d9; }
+.light-theme .badge-green { background: rgba(16, 185, 129, 0.15); color: #047857; }
+.light-theme .badge-orange { background: rgba(217, 119, 6, 0.15); color: #b45309; }
+.light-theme .badge-red { background: rgba(220, 38, 38, 0.15); color: #b91c1c; }
+
 /* Layout Grid & Containers */
 .app-container {
   display: flex;
@@ -246,6 +257,7 @@ select.form-input option,
   font-size: 1.6rem;
   font-weight: 800;
   letter-spacing: -0.5px;
+  color: var(--text-main);
 }
 
 .page-subtitle {
@@ -275,6 +287,7 @@ select.form-input option,
   max-width: 540px;
   padding: 28px;
   box-shadow: var(--shadow-lg);
+  color: var(--text-main);
   animation: modalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -292,11 +305,12 @@ select.form-input option,
 }
 
 .kanban-column {
-  background: rgba(15, 23, 42, 0.4);
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 16px;
   min-height: 500px;
+  color: var(--text-main);
 }
 
 .column-header {
@@ -306,6 +320,7 @@ select.form-input option,
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
 }
 
 /* ---- Animations ---- */
@@ -331,45 +346,39 @@ select.form-input option,
   }
 }
 
-/* Notification dropdown item hover */
-.notif-item-hover:hover {
-  background-color: #f8fafc !important;
-}
-
 /* Table header theming */
 table th {
-  background-color: #0b1220;
-  color: #94a3b8;
+  background-color: var(--bg-header);
+  color: var(--text-subtle);
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 10px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--border-color);
 }
 
 table td {
   padding: 10px 12px;
-  color: #cbd5e1;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-color);
   vertical-align: middle;
 }
 
 table tr:hover td {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: var(--bg-card-hover);
 }
 
-/* Header Nav Tabs — fully CSS-driven, immune to Chrome :visited restrictions */
+/* Header Nav Tabs — fully CSS-driven */
 .nav-tab-link {
   display: inline-block;
   position: relative;
   padding: 10px 14px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--text-muted);
   white-space: nowrap;
   transition: color 0.15s ease;
-  /* Kill ALL browser default link styling */
   text-decoration: none !important;
   border: none !important;
   outline: none !important;
@@ -377,8 +386,6 @@ table tr:hover td {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Kill :visited browser override — these rules DO nothing to color
-   but prevent the browser from applying its own :visited styles */
 .nav-tab-link:link,
 .nav-tab-link:visited,
 .nav-tab-link:hover,
@@ -390,7 +397,6 @@ table tr:hover td {
   box-shadow: none !important;
 }
 
-/* Bottom indicator via ::after — NOT a border on <a>, so :visited can't touch it */
 .nav-tab-link::after {
   content: '';
   position: absolute;
@@ -402,7 +408,6 @@ table tr:hover td {
   transition: background 0.15s ease;
 }
 
-/* Active state — NavLink adds 'active' class automatically */
 .nav-tab-link.active {
   color: #3b82f6 !important;
   font-weight: 700;
@@ -411,4 +416,3 @@ table tr:hover td {
 .nav-tab-link.active::after {
   background: #3b82f6 !important;
 }
-

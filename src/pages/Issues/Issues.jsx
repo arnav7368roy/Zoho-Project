@@ -432,11 +432,11 @@ export default function Issues() {
           alignItems: 'center',
           gap: '8px',
           padding: '8px 24px',
-          backgroundColor: '#090d16',
-          borderBottom: '1px solid #1e293b',
+          backgroundColor: 'var(--bg-header)',
+          borderBottom: '1px solid var(--border-color)',
           flexWrap: 'wrap',
         }}>
-          <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600' }}>Active Filters:</span>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600' }}>Active Filters:</span>
           {Object.entries(appliedFilters).map(([cat, vals]) => (
             <span
               key={cat}
@@ -445,12 +445,12 @@ export default function Issues() {
                 alignItems: 'center',
                 gap: '4px',
                 padding: '3px 10px',
-                backgroundColor: '#1e293b',
-                color: '#60a5fa',
+                backgroundColor: 'var(--bg-input)',
+                color: 'var(--primary)',
                 borderRadius: '16px',
                 fontSize: '0.75rem',
                 fontWeight: '600',
-                border: '1px solid #334155',
+                border: '1px solid var(--border-color)',
               }}
             >
               <span style={{ color: '#94a3b8' }}>{cat}:</span> {Array.isArray(vals) ? vals.join(', ') : vals}
@@ -586,12 +586,12 @@ export default function Issues() {
                         </div>
                       </td>
 
-                      <td style={{ fontWeight: '700', color: '#60a5fa' }}>{code}</td>
-                      <td style={{ fontWeight: '600', color: '#ffffff' }}>{iss.title}</td>
-                      <td style={{ color: '#cbd5e1', fontSize: '0.82rem' }}>
+                      <td style={{ fontWeight: '700', color: 'var(--primary)' }}>{code}</td>
+                      <td style={{ fontWeight: '600', color: 'var(--text-main)' }}>{iss.title}</td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                         {iss.reporterName || 'Unassigned'}
                       </td>
-                      <td style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
+                      <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                         {iss.createdAt ? new Date(iss.createdAt).toLocaleString() : '-'}
                       </td>
                       <td>
@@ -614,13 +614,13 @@ export default function Issues() {
                       <td>
                         <span style={styles.tagPill}>{iss.projectName || 'Project'}</span>
                       </td>
-                      <td style={{ color: '#94a3b8', fontSize: '0.82rem' }}>Not Associated</td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Not Associated</td>
                       <td>
-                        <span style={{ fontSize: '0.82rem', color: '#e2e8f0', fontWeight: '600' }}>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--text-main)', fontWeight: '600' }}>
                           👤 {iss.assigneeName || 'Unassigned'}
                         </span>
                       </td>
-                      <td style={{ color: '#94a3b8', fontSize: '0.82rem' }}>{iss.dueDate || '-'}</td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{iss.dueDate || '-'}</td>
                       <td>
                         <span style={{ color: '#ef4444', fontWeight: '700', fontSize: '0.8rem' }}>
                           {iss.severity || 'Critical'}
@@ -1608,18 +1608,18 @@ const styles = {
     fontWeight: '700',
   },
   tableContainer: {
-    backgroundColor: '#0b0f19',
+    backgroundColor: 'var(--bg-card)',
     borderRadius: '8px',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    border: '1px solid var(--border-color)',
     overflow: 'hidden',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+    boxShadow: 'var(--shadow-md)',
   },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
     fontSize: '0.84rem',
     textAlign: 'left',
-    color: '#cbd5e1',
+    color: 'var(--text-main)',
   },
   tableRow: {
     borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
@@ -1639,17 +1639,19 @@ const styles = {
     minHeight: '650px',
   },
   leftList: {
-    width: '280px',
-    backgroundColor: '#0b0f19',
+    width: '320px',
+    backgroundColor: 'var(--bg-card)',
     borderRadius: '8px',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    border: '1px solid var(--border-color)',
     display: 'flex',
     flexDirection: 'column',
     flexShrink: 0,
+    overflow: 'hidden',
   },
   listHeader: {
-    padding: '10px',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+    padding: '12px 14px',
+    borderBottom: '1px solid var(--border-color)',
+    backgroundColor: 'var(--bg-header)',
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
@@ -1657,8 +1659,8 @@ const styles = {
   listSearchInput: {
     background: 'none',
     border: 'none',
-    color: '#ffffff',
-    fontSize: '0.82rem',
+    color: 'var(--text-main)',
+    fontSize: '0.85rem',
     outline: 'none',
     width: '100%',
   },
@@ -1668,17 +1670,17 @@ const styles = {
   },
   issueCardItem: {
     padding: '12px 14px',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+    borderBottom: '1px solid var(--border-color)',
     cursor: 'pointer',
   },
   selectedIssueCardItem: {
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
-    borderLeft: '3px solid #3b82f6',
+    backgroundColor: 'var(--primary-light)',
+    borderLeft: '3px solid var(--primary)',
   },
   issueCardTitle: {
     fontSize: '0.82rem',
     fontWeight: '600',
-    color: '#f8fafc',
+    color: 'var(--text-main)',
     marginTop: '4px',
     display: '-webkit-box',
     WebkitLineClamp: 2,
@@ -1687,24 +1689,24 @@ const styles = {
   },
   rightDetailPane: {
     flex: 1,
-    backgroundColor: '#0b0f19',
+    backgroundColor: 'var(--bg-card)',
     borderRadius: '8px',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    color: '#f8fafc',
+    border: '1px solid var(--border-color)',
+    color: 'var(--text-main)',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+    boxShadow: 'var(--shadow-md)',
   },
   detailHeaderBox: {
     padding: '24px',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-    backgroundColor: '#090d16',
+    borderBottom: '1px solid var(--border-color)',
+    backgroundColor: 'var(--bg-header)',
   },
   detailTitle: {
     fontSize: '1.25rem',
     fontWeight: '800',
-    color: '#f8fafc',
+    color: 'var(--text-main)',
     lineHeight: '1.4',
     margin: 0,
   },
@@ -1712,9 +1714,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    backgroundColor: '#1e293b',
-    border: '1px solid #334155',
-    color: '#f8fafc',
+    backgroundColor: 'var(--bg-input)',
+    border: '1px solid var(--border-color)',
+    color: 'var(--text-main)',
     borderRadius: '20px',
     padding: '6px 16px',
     fontSize: '0.85rem',
@@ -1726,10 +1728,10 @@ const styles = {
     top: '40px',
     left: 0,
     width: '220px',
-    backgroundColor: '#0f172a',
+    backgroundColor: 'var(--bg-card)',
     borderRadius: '8px',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-    border: '1px solid #334155',
+    boxShadow: 'var(--shadow-lg)',
+    border: '1px solid var(--border-color)',
     zIndex: 100,
     padding: '8px 0',
   },
@@ -1738,13 +1740,15 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     padding: '6px 12px',
-    borderBottom: '1px solid #f1f5f9',
+    borderBottom: '1px solid var(--border-color)',
   },
   popupInput: {
     border: 'none',
     outline: 'none',
     fontSize: '0.8rem',
     width: '100%',
+    backgroundColor: 'transparent',
+    color: 'var(--text-main)',
   },
   statusOptionRow: {
     display: 'flex',
@@ -1756,26 +1760,26 @@ const styles = {
   },
   descriptionSection: {
     padding: '24px',
-    borderBottom: '1px solid #e2e8f0',
-    backgroundColor: '#ffffff',
+    borderBottom: '1px solid var(--border-color)',
+    backgroundColor: 'var(--bg-card)',
   },
   sectionHeading: {
     fontSize: '0.85rem',
     fontWeight: '800',
-    color: '#334155',
+    color: 'var(--text-muted)',
     marginTop: '12px',
     marginBottom: '4px',
   },
   descText: {
     fontSize: '0.88rem',
-    color: '#475569',
+    color: 'var(--text-main)',
     margin: 0,
     lineHeight: '1.5',
   },
   infoGridContainer: {
     padding: '24px',
-    backgroundColor: '#f8fafc',
-    borderBottom: '1px solid #e2e8f0',
+    backgroundColor: 'var(--bg-header)',
+    borderBottom: '1px solid var(--border-color)',
   },
   gridTwoCols: {
     display: 'grid',
@@ -1786,15 +1790,15 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     padding: '8px 0',
-    borderBottom: '1px solid #e2e8f0',
+    borderBottom: '1px solid var(--border-color)',
     fontSize: '0.85rem',
   },
   infoLabel: {
-    color: '#64748b',
+    color: 'var(--text-muted)',
     fontWeight: '600',
   },
   infoVal: {
-    color: '#0f172a',
+    color: 'var(--text-main)',
     fontWeight: '600',
   },
 
@@ -1803,13 +1807,13 @@ const styles = {
     display: 'flex',
     gap: '16px',
     padding: '12px 24px 0 24px',
-    borderBottom: '1px solid #e2e8f0',
-    backgroundColor: '#ffffff',
+    borderBottom: '1px solid var(--border-color)',
+    backgroundColor: 'var(--bg-card)',
   },
   tabItem: {
     background: 'none',
     border: 'none',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     fontSize: '0.82rem',
     fontWeight: '600',
     paddingBottom: '10px',
@@ -1817,13 +1821,13 @@ const styles = {
     borderBottom: '2px solid transparent',
   },
   activeTabItem: {
-    color: '#2563eb',
+    color: 'var(--primary)',
     fontWeight: '700',
-    borderBottom: '2px solid #2563eb',
+    borderBottom: '2px solid var(--primary)',
   },
   commentEditorBox: {
     padding: '16px 24px',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--bg-card)',
   },
   userAvatarSmall: {
     width: '28px',
@@ -1850,24 +1854,25 @@ const styles = {
   drawerContainer: {
     width: '640px',
     height: '100vh',
-    backgroundColor: '#ffffff',
-    color: '#0f172a',
+    backgroundColor: 'var(--bg-card)',
+    color: 'var(--text-main)',
+    borderLeft: '1px solid var(--border-color)',
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: '-4px 0 25px rgba(0,0,0,0.2)',
+    boxShadow: 'var(--shadow-lg)',
   },
   drawerHeader: {
     padding: '18px 24px',
-    borderBottom: '1px solid #e2e8f0',
+    borderBottom: '1px solid var(--border-color)',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--bg-header)',
   },
   standardLayoutBadge: {
     fontSize: '0.75rem',
-    color: '#64748b',
-    backgroundColor: '#f1f5f9',
+    color: 'var(--text-muted)',
+    backgroundColor: 'var(--bg-input)',
     padding: '3px 8px',
     borderRadius: '4px',
     fontWeight: '600',
@@ -1875,7 +1880,7 @@ const styles = {
   closeIconBtn: {
     background: 'none',
     border: 'none',
-    color: '#64748b',
+    color: 'var(--text-muted)',
     cursor: 'pointer',
   },
   drawerBody: {
@@ -1886,7 +1891,7 @@ const styles = {
   drawerLabel: {
     fontSize: '0.82rem',
     fontWeight: '700',
-    color: '#334155',
+    color: 'var(--text-muted)',
     marginBottom: '6px',
     display: 'block',
   },
@@ -1894,14 +1899,14 @@ const styles = {
     width: '100%',
     padding: '8px 12px',
     fontSize: '0.85rem',
-    border: '1px solid #cbd5e1',
+    border: '1px solid var(--border-color)',
     borderRadius: '6px',
     outline: 'none',
-    color: '#0f172a',
-    backgroundColor: '#ffffff',
+    color: 'var(--text-main)',
+    backgroundColor: 'var(--bg-input)',
   },
   wysiwygBox: {
-    border: '1px solid #cbd5e1',
+    border: '1px solid var(--border-color)',
     borderRadius: '6px',
     overflow: 'hidden',
   },
@@ -1910,15 +1915,15 @@ const styles = {
     alignItems: 'center',
     gap: '12px',
     padding: '8px 12px',
-    backgroundColor: '#f8fafc',
-    borderBottom: '1px solid #e2e8f0',
+    backgroundColor: 'var(--bg-header)',
+    borderBottom: '1px solid var(--border-color)',
   },
   toolIcon: {
-    color: '#64748b',
+    color: 'var(--text-muted)',
     cursor: 'pointer',
   },
   toolDivider: {
-    color: '#cbd5e1',
+    color: 'var(--border-color)',
   },
   wysiwygTextarea: {
     width: '100%',
@@ -1926,14 +1931,15 @@ const styles = {
     border: 'none',
     outline: 'none',
     fontSize: '0.85rem',
-    color: '#0f172a',
+    color: 'var(--text-main)',
+    backgroundColor: 'var(--bg-card)',
     resize: 'vertical',
   },
   dropZone: {
-    border: '1px dashed #cbd5e1',
+    border: '1px dashed var(--border-color)',
     borderRadius: '6px',
     padding: '16px',
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'var(--bg-input)',
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
@@ -1942,13 +1948,13 @@ const styles = {
   sectionHeader: {
     fontSize: '0.88rem',
     fontWeight: '800',
-    color: '#0f172a',
+    color: 'var(--text-main)',
     margin: '16px 0',
   },
   drawerFooter: {
     padding: '16px 24px',
-    borderTop: '1px solid #e2e8f0',
-    backgroundColor: '#f8fafc',
+    borderTop: '1px solid var(--border-color)',
+    backgroundColor: 'var(--bg-header)',
     display: 'flex',
     gap: '10px',
   },
